@@ -235,5 +235,5 @@ La DA retenue sera documentée ici (palette, typographies, composants signature)
 
 ## 12. Points ouverts
 
-- Distribution aux amis via TestFlight : il faut un compte Apple Developer (99 $/an), qui sert aussi pour Sign in with Apple et les push hors Expo Go.
+- Distribution aux amis : TestFlight, avec le compte Apple Developer existant (qui sert aussi pour Sign in with Apple et les push en build EAS).
 - Suppression de compte : révocation du token Apple exigée par Apple (`revokeAccessToken` du SDK Firebase Auth), à valider à l'implémentation.
