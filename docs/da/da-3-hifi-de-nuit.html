@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Angelus, DA 3 : Hi-fi de nuit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DotGothic16&family=Michroma&display=swap" rel="stylesheet">
+<style>
+:root{
+  --face:#2A2B2E;
+  --face-hi:#34363A;
+  --face-lo:#202124;
+  --glass:#0C1416;
+  --vfd:#5CF2E3;
+  --amber:#FFB23E;
+  --dial:#F2E6C9;
+  --alu:#C9CCD1;
+  --led:#FF3B2F;
+  --room:#1A1B1E;
+  --ink-2:#9A9DA3;
+  --ink-3:#7E8187;
+  --f-vfd:"DotGothic16", "Barlow Semi Condensed", system-ui, sans-serif;
+  --f-silk:"Michroma", "Barlow Semi Condensed", system-ui, sans-serif;
+  --f-body:"Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-ios:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(900px 500px at 12% -10%, rgba(255,178,62,.10), transparent 70%),
+    radial-gradient(700px 500px at 100% 30%, rgba(92,242,227,.05), transparent 70%),
+    var(--room);
+  color:var(--alu);
+  font-family:var(--f-body);
+  font-size:17px;
+  line-height:1.45;
+  padding-block:48px 80px;
+  padding-inline:24px;
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button:focus-visible{outline:2px solid var(--vfd);outline-offset:3px}
+img{display:block;max-width:100%}
+
+/* ---------- Shared material ---------- */
+.brushed{
+  background-color:var(--face);
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,.035), rgba(0,0,0,.10)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.016) 0 1px, rgba(0,0,0,.02) 1px 2px, transparent 2px 4px);
+}
+.glass{
+  background:
+    radial-gradient(140% 90% at 20% -10%, rgba(92,242,227,.07), transparent 55%),
+    var(--glass);
+  border-radius:10px;
+  box-shadow:
+    inset 0 2px 8px rgba(0,0,0,.85),
+    inset 0 0 0 1px rgba(255,255,255,.035),
+    0 1px 0 rgba(255,255,255,.07),
+    0 -1px 0 rgba(0,0,0,.5);
+}
+.vfd{
+  font-family:var(--f-vfd);
+  color:var(--vfd);
+  text-shadow:0 0 6px rgba(92,242,227,.55), 0 0 18px rgba(92,242,227,.22);
+}
+.silk{font-family:var(--f-silk);letter-spacing:.02em}
+.key-alu{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  height:56px;width:100%;
+  border-radius:9px;
+  background:linear-gradient(180deg,#E1E3E7 0%,#C9CCD1 45%,#B4B8BE 100%);
+  color:#1E1F22;
+  font-family:var(--f-body);font-weight:600;font-size:19px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.75),
+    inset 0 -2px 0 rgba(0,0,0,.16),
+    0 3px 0 #141517,
+    0 8px 18px rgba(0,0,0,.45);
+}
+.key-dark{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  height:52px;width:100%;
+  border-radius:9px;
+  background:linear-gradient(180deg,#3A3C40,#2B2D30);
+  color:var(--alu);
+  font-weight:600;font-size:18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.09),
+    inset 0 0 0 1px rgba(201,204,209,.22),
+    0 3px 0 #141517,
+    0 8px 16px rgba(0,0,0,.35);
+}
+.led{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none;background:#3A3D41;box-shadow:inset 0 1px 1px rgba(0,0,0,.6)}
+.led.on-cyan{background:var(--vfd);box-shadow:0 0 6px rgba(92,242,227,.9)}
+.led.on-amber{background:var(--amber);box-shadow:0 0 6px rgba(255,178,62,.9)}
+.led.on-red{background:var(--led);box-shadow:0 0 6px rgba(255,59,47,.9)}
+
+/* ---------- Page header ---------- */
+.intro{
+  max-width:1320px;margin:0 auto 64px;
+  border-radius:16px;
+  padding:28px;
+  display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 20px 50px rgba(0,0,0,.45);
+}
+.intro-display{padding:26px 28px 24px;display:flex;flex-direction:column;gap:18px}
+.intro-display h1{margin:0;font-size:54px;line-height:1.05;font-weight:400}
+.intro-display p{margin:0;max-width:56ch;color:var(--alu);font-size:19px;line-height:1.5}
+.intro-meter{margin-top:auto;align-self:flex-start;padding:8px;border-radius:12px;background:#141517;box-shadow:inset 0 1px 3px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.06)}
+.intro-meter svg{display:block;width:300px;height:141px;border-radius:6px;box-shadow:0 0 34px rgba(255,178,62,.30)}
+.lights{list-style:none;margin:6px 0 0;padding:18px 0 0;display:flex;flex-direction:column;gap:10px;border-top:1px dotted rgba(92,242,227,.2)}
+.lights li{display:grid;grid-template-columns:12px 64px 1fr;gap:10px;align-items:center;font-size:16px;color:var(--ink-2)}
+.lights .led{width:9px;height:9px}
+.lights b{font-weight:600;color:var(--alu)}
+.intro-side{display:flex;flex-direction:column;gap:22px}
+.intro-side h2{margin:0 0 10px;font-family:var(--f-body);font-weight:600;font-size:17px;color:var(--ink-2)}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+.sw{display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:10px;background:var(--face-lo);box-shadow:inset 0 1px 2px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.05)}
+.sw i{display:block;height:44px;border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.sw b{font-weight:600;font-size:15px;line-height:1.2;color:var(--alu)}
+.sw span{font-size:14px;color:var(--ink-2)}
+.specimens{display:flex;flex-direction:column;gap:10px}
+.spec{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:baseline;padding:10px 12px;border-radius:10px;background:var(--face-lo);box-shadow:inset 0 1px 2px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.05)}
+.spec small{font-size:14px;color:var(--ink-2)}
+.spec .s-vfd{font-size:24px}
+.spec .s-silk{font-size:15px;color:var(--alu)}
+.spec .s-body{font-size:22px;font-weight:600;color:var(--alu)}
+
+/* ---------- Screens gallery ---------- */
+.screens{display:flex;flex-wrap:wrap;justify-content:center;gap:56px 44px;max-width:1400px;margin:0 auto}
+figure{margin:0;display:flex;flex-direction:column;gap:18px;width:413px}
+figcaption{padding:0 10px;color:var(--ink-2);font-size:16px;line-height:1.45}
+figcaption b{display:block;color:var(--alu);font-weight:600;font-size:17px}
+
+.device{
+  width:413px;height:872px;padding:10px;border-radius:66px;
+  background:linear-gradient(145deg,#4A4C51,#26272A 40%,#3B3D41);
+  box-shadow:0 0 0 1px #0A0A0B, 0 30px 60px rgba(0,0,0,.55);
+}
+.phone{
+  position:relative;width:393px;height:852px;border-radius:56px;overflow:hidden;
+  background-color:#000;isolation:isolate;
+  font-family:var(--f-body);
+}
+.island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:125px;height:37px;border-radius:20px;background:#000;z-index:30}
+.statusbar{
+  position:absolute;top:0;left:0;right:0;height:54px;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:4px 34px 0 42px;
+  font-family:var(--f-ios);font-weight:600;font-size:17px;color:#F4F5F6;
+}
+.statusbar .icons{display:flex;gap:6px;align-items:center}
+.app{position:absolute;inset:0;display:flex;flex-direction:column}
+.app-body{flex:1;padding:54px 16px 0;display:flex;flex-direction:column;min-height:0}
+
+.app-head{height:48px;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.brand{font-family:var(--f-silk);font-size:14px;color:var(--alu);letter-spacing:.04em}
+.selector{
+  display:flex;align-items:center;gap:10px;height:40px;padding:0 12px 0 14px;border-radius:20px;
+  background:var(--face-lo);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.06);
+  font-weight:600;font-size:16px;color:var(--alu);
+}
+.selector .leds{display:flex;gap:4px}
+.selector .led{width:6px;height:6px}
+
+.tabbar{
+  position:absolute;left:0;right:0;bottom:0;height:86px;z-index:10;
+  display:grid;grid-template-columns:repeat(3,1fr);padding:8px 18px 0;
+  background:linear-gradient(180deg,#252629,#1D1E21);
+  box-shadow:0 -1px 0 rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
+}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;height:52px;justify-content:flex-start;color:var(--ink-3);font-size:13px;font-weight:500}
+.tab .led{width:5px;height:5px;margin-bottom:3px;background:transparent;box-shadow:none}
+.tab.is-active{color:#EEF0F2}
+.tab.is-active .led{background:var(--vfd);box-shadow:0 0 6px rgba(92,242,227,.9)}
+.homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;background:#E9EAEC;z-index:25}
+
+.phone.brushed{
+  background-color:var(--face);
+  background-image:
+    radial-gradient(120% 50% at 50% 0%, rgba(255,255,255,.05), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,.03), rgba(0,0,0,.12)),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, rgba(0,0,0,.022) 1px 2px, transparent 2px 4px);
+}
+
+/* ---------- Screen 1: lock ---------- */
+.lock{position:absolute;inset:0;color:#F6F4EE;font-family:var(--f-ios)}
+.lock-bg{position:absolute;inset:0}
+.lock-date{position:absolute;top:92px;left:0;right:0;text-align:center;font-size:21px;font-weight:600;opacity:.9}
+.lock-time{position:absolute;top:112px;left:0;right:0;text-align:center;font-size:104px;font-weight:600;letter-spacing:-2px;line-height:1.1;color:rgba(246,244,238,.94)}
+.notif{
+  position:absolute;left:12px;right:12px;top:540px;
+  padding:13px 14px 14px;border-radius:24px;
+  background:rgba(38,38,40,.52);
+  -webkit-backdrop-filter:blur(26px) saturate(160%);backdrop-filter:blur(26px) saturate(160%);
+  box-shadow:inset 0 0 0 .5px rgba(255,255,255,.18);
+  display:grid;grid-template-columns:40px 1fr;gap:11px;align-items:start;
+}
+.notif .appicon{width:40px;height:40px;border-radius:10px;overflow:hidden}
+.notif .top{display:flex;justify-content:space-between;align-items:baseline}
+.notif .top b{font-size:16px;font-weight:600}
+.notif .top span{font-size:14px;opacity:.6}
+.notif p{margin:1px 0 0;font-size:16px;line-height:1.32}
+.lock-actions{position:absolute;bottom:44px;left:46px;right:46px;display:flex;justify-content:space-between}
+.lock-actions span{width:52px;height:52px;border-radius:50%;background:rgba(30,30,32,.45);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);display:grid;place-items:center}
+
+/* ---------- Screen 2: before post ---------- */
+.hero{padding:18px 18px 16px}
+.hero-top{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--f-body);font-size:15px;color:rgba(92,242,227,.62)}
+.hero-theme{margin:10px 0 18px;font-size:30px;line-height:1.22}
+.hero-rule{height:1px;background:repeating-linear-gradient(90deg,rgba(92,242,227,.28) 0 2px,transparent 2px 5px)}
+.hero-count{display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px}
+.hero-count p{margin:0 0 6px;font-size:15px;line-height:1.3;color:rgba(92,242,227,.72);max-width:15ch}
+.digits{position:relative;font-size:60px;line-height:1}
+.digits .ghost{position:absolute;inset:0;color:rgba(92,242,227,.07);text-shadow:none}
+
+.section-label{display:flex;justify-content:space-between;align-items:baseline;margin:18px 2px 10px}
+.section-label b{font-weight:600;font-size:17px;color:var(--alu)}
+.section-label span{font-size:14px;color:var(--ink-2)}
+
+.locked{padding:12px}
+.locked-legend{display:flex;align-items:center;gap:9px;font-size:15px;color:#E9C98F;margin:2px 2px 12px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile .cover{position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;background:#000}
+.tile .cover img{width:100%;height:100%;object-fit:cover;filter:blur(9px) saturate(.8);transform:scale(1.25)}
+.tile .cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,20,22,.55),rgba(12,20,22,.78));box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.tile .cover svg{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%)}
+.tile b{display:block;margin-top:7px;font-size:16px;font-weight:600;color:var(--alu);line-height:1.2}
+.tile span{font-size:14px;color:var(--ink-2)}
+.missing{display:flex;align-items:center;gap:10px;margin:14px 2px 2px;padding-top:12px;border-top:1px solid rgba(255,255,255,.05);font-size:15px;color:var(--ink-2)}
+.missing .led{background:#34373B}
+.cta-dock{margin-top:auto;padding-bottom:100px}
+
+/* ---------- Screen 3: search / tuner ---------- */
+.nav-head{height:48px;display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.nav-head button{width:44px;height:44px;display:grid;place-items:center;margin-left:-10px}
+.nav-head b{font-size:21px;font-weight:600;color:#EEF0F2}
+.searchbox{height:54px;display:flex;align-items:center;gap:10px;padding:0 8px 0 14px}
+.searchbox .q{font-size:22px;flex:1;display:flex;align-items:center}
+.searchbox .caret{display:inline-block;width:2px;height:24px;margin-left:3px;background:var(--vfd);box-shadow:0 0 6px rgba(92,242,227,.8)}
+.searchbox button{width:44px;height:44px;display:grid;place-items:center}
+.tuner{margin-top:12px;display:grid;grid-template-columns:22px 1fr;padding:6px 10px 6px 0;position:relative}
+.scale{position:relative;background:repeating-linear-gradient(180deg,rgba(201,204,209,.22) 0 1px,transparent 1px 8px);background-size:8px 100%;background-repeat:repeat-y;background-position:7px 0}
+.scale::before{content:"";position:absolute;top:0;bottom:0;left:15px;width:1px;background:rgba(201,204,209,.14)}
+.pointer{position:absolute;left:0;width:34px;height:3px;border-radius:2px;background:var(--amber);box-shadow:0 0 8px rgba(255,178,62,.95),0 0 18px rgba(255,178,62,.5)}
+.results{display:flex;flex-direction:column}
+.res{display:grid;grid-template-columns:46px 1fr auto;gap:12px;align-items:center;min-height:62px;padding:8px 4px 8px 12px;border-top:1px solid rgba(255,255,255,.045)}
+.res img{width:46px;height:46px;border-radius:4px;object-fit:cover}
+.res b{display:block;font-size:17px;font-weight:600;color:#EEF0F2;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.res span{font-size:15px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.res em{font-style:normal;font-size:15px;color:var(--ink-3)}
+.res.is-selected{display:block;padding:12px 8px 14px 12px;border-top:0;background:linear-gradient(90deg,rgba(255,178,62,.09),rgba(255,178,62,0) 70%);border-radius:0 8px 8px 0}
+.sel-top{display:grid;grid-template-columns:74px 1fr;gap:14px;align-items:center}
+.sel-top img{width:74px;height:74px;border-radius:5px;box-shadow:0 4px 12px rgba(0,0,0,.6)}
+.sel-top b{font-size:20px}
+.sel-top span{font-size:16px}
+.player{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center;margin-top:12px}
+.play-key{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#E1E3E7,#B4B8BE);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 2px 0 #141517,0 5px 10px rgba(0,0,0,.4)}
+.segs{display:flex;gap:2px}
+.segs i{flex:1;height:12px;border-radius:1px;background:rgba(92,242,227,.10)}
+.segs i.on{background:var(--vfd);box-shadow:0 0 5px rgba(92,242,227,.7)}
+.player-time{display:flex;justify-content:space-between;margin-top:5px;font-size:14px}
+.player-time span:last-child{color:rgba(92,242,227,.55)}
+.post-dock{position:absolute;left:0;right:0;bottom:0;padding:14px 16px 40px;background:linear-gradient(180deg,#27282B,#1F2023);box-shadow:0 -1px 0 rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06)}
+.post-dock p{margin:0 0 12px;font-size:15px;color:var(--ink-2);line-height:1.35}
+.post-dock p b{color:var(--alu);font-weight:600}
+
+/* ---------- Screen 4: after post, VU meters ---------- */
+.hero-mini{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;padding:12px 14px}
+.hero-mini .t{font-size:17px;line-height:1.28}
+.hero-mini .c{text-align:right}
+.hero-mini .c small{display:block;font-family:var(--f-body);font-size:14px;color:rgba(92,242,227,.62);text-shadow:none;margin-bottom:2px}
+.hero-mini .c div{font-size:26px;line-height:1}
+.feed{display:flex;flex-direction:column;margin:0 -4px}
+.row{display:grid;grid-template-columns:54px 1fr 108px;gap:12px;align-items:center;padding:9px 4px;border-top:1px solid rgba(0,0,0,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+.row:first-child{border-top:0;box-shadow:none}
+.row.is-own{background:linear-gradient(90deg,rgba(255,255,255,.035),rgba(255,255,255,0));border-radius:10px;padding-left:8px;padding-right:8px;margin:0 -4px}
+.cov{position:relative;width:54px;height:54px;border-radius:5px;overflow:hidden}
+.cov img{width:100%;height:100%;object-fit:cover}
+.cov .pl{position:absolute;right:4px;bottom:4px;width:22px;height:22px;border-radius:50%;background:rgba(12,20,22,.78);display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
+.info{min-width:0}
+.info b{display:block;font-size:16px;font-weight:600;color:#EEF0F2;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info .ar{display:block;font-size:15px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.info .by{display:flex;align-items:center;gap:7px;margin-top:2px;font-size:14px;color:var(--alu)}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:500}
+.badge.ontime{color:var(--vfd)}
+.badge.late{color:#FF6A60}
+.meter{
+  display:block;width:108px;padding:5px 5px 4px;border-radius:9px;
+  background:#141517;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.06);
+  text-align:center;position:relative;
+}
+.meter .dial{display:block;width:98px;height:46px;border-radius:4px;overflow:hidden;box-shadow:0 0 14px rgba(255,178,62,.30)}
+.meter .who{display:block;margin-top:3px;font-size:13px;line-height:1.25;color:var(--amber);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.meter .who.none{color:var(--ink-3)}
+.meter.is-mine{box-shadow:inset 0 1px 3px rgba(0,0,0,.8),0 0 0 2px rgba(92,242,227,.85),0 0 14px rgba(92,242,227,.35)}
+.meter[disabled]{cursor:default}
+.row.is-waiting{grid-template-columns:54px 1fr;opacity:.75}
+.slot{width:54px;height:54px;border-radius:5px;background:var(--glass);box-shadow:inset 0 2px 6px rgba(0,0,0,.8)}
+
+.needle{transform-box:view-box;transform-origin:50px 72px;transform:rotate(var(--a));animation:needle-in 1.5s cubic-bezier(.25,.8,.35,1) var(--d,.25s) both}
+@keyframes needle-in{
+  0%{transform:rotate(-52deg)}
+  52%{transform:rotate(calc(var(--a) + 10deg))}
+  72%{transform:rotate(calc(var(--a) - 4deg))}
+  88%{transform:rotate(calc(var(--a) + 1.5deg))}
+  100%{transform:rotate(var(--a))}
+}
+.needle.is-static{animation:none}
+@media (prefers-reduced-motion: reduce){.needle{animation:none}}
+
+/* ---------- Screen 5: playlist ---------- */
+.page-title{margin:4px 2px 2px;font-size:28px;font-weight:600;line-height:1.15;color:#EEF0F2}
+.page-sub{margin:0 2px 14px;font-size:16px;color:var(--ink-2)}
+.deck{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 12px 12px 14px}
+.counter{display:flex;gap:3px;padding:4px;border-radius:5px;background:#050708;box-shadow:inset 0 1px 2px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.06)}
+.counter span{width:25px;height:38px;border-radius:2px;display:grid;place-items:center;font-family:var(--f-body);font-weight:600;font-size:26px;color:#ECE7DA;background:linear-gradient(180deg,#000 0%,#2A2B2D 30%,#3A3B3E 50%,#2A2B2D 70%,#000 100%)}
+.deck-meta{white-space:nowrap;min-width:0}
+.key-alu{white-space:nowrap}
+.deck-meta b{display:block;font-size:16px;font-weight:600;color:var(--alu);line-height:1.2}
+.deck-meta span{font-size:14px;color:var(--ink-2)}
+.deck .key-alu{height:48px;font-size:17px;width:auto;padding:0 16px}
+.tracks{margin-top:14px;display:flex;flex-direction:column}
+.track{display:grid;grid-template-columns:44px 50px 1fr auto;gap:11px;align-items:center;padding:10px 2px;border-top:1px solid rgba(0,0,0,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+.track:first-child{border-top:0;box-shadow:none}
+.track .date{font-family:var(--f-silk);font-size:10px;color:var(--ink-3);line-height:1.2;text-align:center}
+.track .date strong{display:block;font-size:17px;font-weight:400;color:var(--alu);line-height:1.25}
+.track img{width:50px;height:50px;border-radius:4px;object-fit:cover}
+.track .txt{min-width:0}
+.track .th{display:block;font-size:14px;color:var(--ink-2);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.track b{display:block;font-size:16px;font-weight:600;color:#EEF0F2;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.track .ar{display:block;font-size:14px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.track .win{text-align:right;line-height:1.25}
+.track .win b{font-size:15px;color:var(--alu)}
+.track .win span{font-size:14px;color:var(--amber)}
+
+/* ---------- Screen 6: invite ---------- */
+.qr-window{padding:18px 18px 14px;display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:4px}
+.qr-panel{width:236px;height:236px;border-radius:8px;padding:12px;
+  background:radial-gradient(circle at 50% 45%,#8AF7EC 0%,#62EBDD 60%,#47CFC1 100%);
+  box-shadow:0 0 22px rgba(92,242,227,.45),0 0 60px rgba(92,242,227,.18),inset 0 0 0 1px rgba(255,255,255,.25)}
+.qr-panel svg{width:100%;height:100%;display:block}
+.qr-code{font-size:22px;letter-spacing:.08em}
+.qr-code small{font-family:var(--f-body);font-size:15px;color:rgba(92,242,227,.62);text-shadow:none;letter-spacing:0;margin-right:8px}
+.members-head{display:flex;justify-content:space-between;align-items:baseline;margin:18px 2px 10px}
+.members-head b{font-size:17px;font-weight:600;color:var(--alu)}
+.members-head span{font-size:15px;color:var(--ink-2)}
+.members{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.member{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:14px;color:var(--ink-2)}
+.knob{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:18px;color:#EEF0F2;
+  background:radial-gradient(circle at 35% 30%,#55585D,#2E3033 60%,#232427);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 2px 0 #141517,0 4px 8px rgba(0,0,0,.4)}
+.knob.me{font-size:15px;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 0 0 2px rgba(92,242,227,.8),0 0 12px rgba(92,242,227,.3)}
+.invite-dock{margin-top:18px}
+
+/* ---------- Responsive ---------- */
+@media (max-width:980px){
+  .intro{grid-template-columns:1fr}
+}
+@media (max-width:480px){
+  .intro-meter svg{width:240px;height:113px}
+  body{padding-inline:16px;padding-block:28px 56px}
+  .intro{padding:14px;gap:18px}
+  .intro-display{padding:18px}
+  .intro-display h1{font-size:40px}
+  .spec{grid-template-columns:1fr;gap:4px}
+  figure{width:auto;align-items:center}
+  .device{zoom:.86}
+}
+@media (max-width:400px){ .device{zoom:.8} }
+@media (max-width:360px){ .device{zoom:.72} }
+</style>
+</head>
+<body>
+
+<header class="intro brushed">
+  <div class="intro-display glass">
+    <h1 class="vfd">Hi-fi de nuit</h1>
+    <p>Angelus devient la façade d'une chaîne hi-fi japonaise des années 70 allumée dans un salon éteint. Le thème et le temps restant s'affichent sur un afficheur fluorescent cyan, les votes font bouger de vrais VU-mètres ambrés.</p>
+    <div class="intro-meter" data-vu-big="3" aria-hidden="true"></div>
+    <ul class="lights">
+      <li><i class="led on-cyan"></i><b>Cyan</b><span>ce que l'app t'annonce : thème, temps restant, ton vote</span></li>
+      <li><i class="led on-amber"></i><b>Ambre</b><span>ce que le groupe exprime : votes, gagnants</span></li>
+      <li><i class="led on-red"></i><b>Rouge</b><span>le retard, et le moment où tu postes</span></li>
+    </ul>
+  </div>
+  <div class="intro-side">
+    <section>
+      <h2>Palette</h2>
+      <div class="swatches">
+        <div class="sw"><i style="background:#2A2B2E"></i><b>Façade anodisée</b><span>#2A2B2E</span></div>
+        <div class="sw"><i style="background:#0C1416"></i><b>Verre fumé</b><span>#0C1416</span></div>
+        <div class="sw"><i style="background:#5CF2E3;box-shadow:0 0 12px rgba(92,242,227,.5)"></i><b>Lueur VFD</b><span>#5CF2E3</span></div>
+        <div class="sw"><i style="background:#FFB23E;box-shadow:0 0 12px rgba(255,178,62,.5)"></i><b>Rétroéclairage ambre</b><span>#FFB23E</span></div>
+        <div class="sw"><i style="background:#F2E6C9"></i><b>Cadran crème</b><span>#F2E6C9</span></div>
+        <div class="sw"><i style="background:linear-gradient(180deg,#E1E3E7,#B4B8BE)"></i><b>Alu des touches</b><span>#C9CCD1</span></div>
+        <div class="sw"><i style="background:#FF3B2F;box-shadow:0 0 12px rgba(255,59,47,.5)"></i><b>LED rouge</b><span>#FF3B2F</span></div>
+      </div>
+    </section>
+    <section>
+      <h2>Typographie</h2>
+      <div class="specimens">
+        <div class="spec"><small>DotGothic16, afficheurs</small><span class="vfd s-vfd">44:48 restantes</span></div>
+        <div class="spec"><small>Michroma, sérigraphie</small><span class="silk s-silk">Angelus, sélecteur de groupe</span></div>
+        <div class="spec"><small>Barlow Semi Condensed, texte</small><span class="s-body">Everybody Wants to Be a Cat</span></div>
+      </div>
+    </section>
+  </div>
+</header>
+
+<main class="screens">
+
+<!-- ============ 1. LOCK SCREEN ============ -->
+<figure>
+  <div class="device"><div class="phone">
+    <div class="island"></div>
+    <div class="statusbar"><span></span><span class="icons" data-icons></span></div>
+    <div class="lock">
+      <svg class="lock-bg" viewBox="0 0 393 852" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <radialGradient id="wp-room" cx="30%" cy="85%" r="90%">
+            <stop offset="0" stop-color="#3A2A14"/>
+            <stop offset=".45" stop-color="#15161A"/>
+            <stop offset="1" stop-color="#0B0F11"/>
+          </radialGradient>
+          <radialGradient id="wp-dial" cx="50%" cy="100%" r="85%">
+            <stop offset="0" stop-color="#FFE3A6"/>
+            <stop offset=".55" stop-color="#F2D9A4"/>
+            <stop offset="1" stop-color="#B98A45"/>
+          </radialGradient>
+          <filter id="wp-soft"><feGaussianBlur stdDeviation="2.2"/></filter>
+          <filter id="wp-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="30"/></filter>
+        </defs>
+        <rect width="393" height="852" fill="url(#wp-room)"/>
+        <ellipse cx="200" cy="700" rx="230" ry="140" fill="#FFB23E" opacity=".35" filter="url(#wp-glow)"/>
+        <g filter="url(#wp-soft)" opacity=".82">
+          <rect x="-20" y="560" width="433" height="330" rx="18" fill="url(#wp-dial)"/>
+          <path d="M 40 760 A 200 200 0 0 1 300 690" fill="none" stroke="#2A2B2E" stroke-width="3"/>
+          <path d="M 300 690 A 200 200 0 0 1 370 730" fill="none" stroke="#C8321F" stroke-width="9"/>
+          <g stroke="#2A2B2E" stroke-width="3">
+            <line x1="52" y1="748" x2="38" y2="730"/><line x1="96" y1="716" x2="86" y2="696"/>
+            <line x1="146" y1="694" x2="140" y2="672"/><line x1="200" y1="684" x2="198" y2="660"/>
+            <line x1="254" y1="686" x2="258" y2="662"/><line x1="306" y1="702" x2="314" y2="680"/>
+          </g>
+          <line x1="170" y1="900" x2="262" y2="640" stroke="#1D1E21" stroke-width="4"/>
+          <rect x="-20" y="820" width="433" height="60" fill="#2A2B2E"/>
+        </g>
+      </svg>
+      <div class="lock-date">lundi 14 septembre</div>
+      <div class="lock-time">14:37</div>
+      <div class="notif">
+        <div class="appicon" data-appicon></div>
+        <div>
+          <div class="top"><b>Angelus</b><span>maintenant</span></div>
+          <p>C'est l'heure. Thème du jour : le son que ton chat écoute en cachette. Tu as 1&nbsp;h pour poster.</p>
+        </div>
+      </div>
+      <div class="lock-actions">
+        <span><svg width="20" height="26" viewBox="0 0 20 26" fill="none" stroke="#F6F4EE" stroke-width="1.8"><path d="M5 1h10l-1.5 7h-7z"/><path d="M6.5 8h7v16a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1z"/></svg></span>
+        <span><svg width="26" height="22" viewBox="0 0 26 22" fill="none" stroke="#F6F4EE" stroke-width="1.8"><path d="M2 6a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><circle cx="13" cy="12" r="4.5"/></svg></span>
+      </div>
+    </div>
+    <div class="homebar"></div>
+  </div></div>
+  <figcaption><b>Écran verrouillé, 14:37</b>Le drop tombe à la même heure pour tout le monde. L'icône reprend le cadran de VU-mètre.</figcaption>
+</figure>
+
+<!-- ============ 2. TODAY, BEFORE POST ============ -->
+<figure>
+  <div class="device"><div class="phone brushed">
+    <div class="island"></div>
+    <div class="statusbar"><span>14:52</span><span class="icons" data-icons></span></div>
+    <div class="app">
+      <div class="app-body">
+        <div class="app-head">
+          <span class="brand">Angelus</span>
+          <button class="selector" aria-label="Groupe : La Coloc, 1 sur 3">La Coloc
+            <span class="leds"><i class="led on-cyan"></i><i class="led"></i><i class="led"></i></span>
+            <svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="#9A9DA3" stroke-width="1.8"><path d="M1 1.5l5 5 5-5"/></svg>
+          </button>
+        </div>
+
+        <section class="hero glass">
+          <div class="hero-top"><span>Thème du jour</span><span>tombé à 14:37</span></div>
+          <div class="hero-theme vfd">Le son que ton chat écoute en cachette</div>
+          <div class="hero-rule"></div>
+          <div class="hero-count">
+            <p>Encore à l'heure pendant</p>
+            <div class="digits vfd"><span class="ghost">88:88</span>44:48</div>
+          </div>
+        </section>
+
+        <div class="section-label"><b>Dans La Coloc</b><span>3 amis sur 5 ont posté</span></div>
+        <section class="locked glass">
+          <div class="locked-legend"><i class="led on-amber"></i>En attente de ton son pour écouter les leurs</div>
+          <div class="tiles">
+            <div class="tile">
+              <div class="cover"><img src="https://cdn-images.dzcdn.net/images/cover/41446548ab08e024ccf7b8211067e3bb/250x250-000000-80-0-0.jpg" alt=""><svg width="18" height="22" viewBox="0 0 18 22" fill="none" stroke="#C9CCD1" stroke-width="1.8"><rect x="1.5" y="9" width="15" height="11.5" rx="2"/><path d="M4.5 9V6a4.5 4.5 0 0 1 9 0v3"/></svg></div>
+              <b>Inès</b><span>à 14:41</span>
+            </div>
+            <div class="tile">
+              <div class="cover"><img src="https://cdn-images.dzcdn.net/images/cover/1890d1017e74e7b998efede3f9304558/250x250-000000-80-0-0.jpg" alt=""><svg width="18" height="22" viewBox="0 0 18 22" fill="none" stroke="#C9CCD1" stroke-width="1.8"><rect x="1.5" y="9" width="15" height="11.5" rx="2"/><path d="M4.5 9V6a4.5 4.5 0 0 1 9 0v3"/></svg></div>
+              <b>Tom</b><span>à 14:44</span>
+            </div>
+            <div class="tile">
+              <div class="cover"><img src="https://cdn-images.dzcdn.net/images/cover/9a7dcc522995724996df71d474e75e32/250x250-000000-80-0-0.jpg" alt=""><svg width="18" height="22" viewBox="0 0 18 22" fill="none" stroke="#C9CCD1" stroke-width="1.8"><rect x="1.5" y="9" width="15" height="11.5" rx="2"/><path d="M4.5 9V6a4.5 4.5 0 0 1 9 0v3"/></svg></div>
+              <b>Léa</b><span>à 14:50</span>
+            </div>
+          </div>
+          <div class="missing"><i class="led"></i><i class="led" style="margin-left:-6px"></i>Max et Sacha n'ont pas encore posté</div>
+        </section>
+
+        <div class="cta-dock">
+          <button class="key-alu">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#1E1F22" stroke-width="2.2"><circle cx="8.5" cy="8.5" r="6.5"/><path d="M13.5 13.5L19 19"/></svg>
+            Choisir mon son
+          </button>
+        </div>
+      </div>
+      <nav class="tabbar" data-tabs="0"></nav>
+    </div>
+    <div class="homebar"></div>
+  </div></div>
+  <figcaption><b>Aujourd'hui, avant de poster</b>Le thème et le temps restant s'affichent sur l'afficheur. Les sons des amis restent derrière le verre fumé tant que tu n'as pas posté.</figcaption>
+</figure>
+
+<!-- ============ 3. SEARCH / TUNER ============ -->
+<figure>
+  <div class="device"><div class="phone brushed">
+    <div class="island"></div>
+    <div class="statusbar"><span>14:55</span><span class="icons" data-icons></span></div>
+    <div class="app">
+      <div class="app-body">
+        <div class="nav-head">
+          <button aria-label="Retour"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="#C9CCD1" stroke-width="2.2"><path d="M10 2L2 10l8 8"/></svg></button>
+          <b>Choisir mon son</b>
+        </div>
+        <div class="searchbox glass">
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="rgba(92,242,227,.6)" stroke-width="2.2"><circle cx="8.5" cy="8.5" r="6.5"/><path d="M13.5 13.5L19 19"/></svg>
+          <span class="q vfd">cat<span class="caret"></span></span>
+          <button aria-label="Effacer"><svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="9" fill="#3A3D41"/><path d="M6 6l6 6M12 6l-6 6" stroke="#C9CCD1" stroke-width="1.8"/></svg></button>
+        </div>
+
+        <section class="tuner glass">
+          <div class="scale"><i class="pointer" style="top:74px"></i></div>
+          <div class="results">
+            <div class="res is-selected">
+              <div class="sel-top">
+                <img src="https://cdn-images.dzcdn.net/images/cover/21d780d99cbe7eb5e1d8b5d31fce28c8/250x250-000000-80-0-0.jpg" alt="Pochette de The Lovecats">
+                <div style="min-width:0"><b>The Lovecats</b><span>The Cure</span><span style="color:var(--ink-3);font-size:14px">3:40 sur Deezer</span></div>
+              </div>
+              <div class="player">
+                <button class="play-key" aria-label="Mettre l'extrait en pause"><svg width="14" height="16" viewBox="0 0 14 16" fill="#1E1F22"><rect x="1" y="1" width="4" height="14" rx="1"/><rect x="9" y="1" width="4" height="14" rx="1"/></svg></button>
+                <div>
+                  <div class="segs" data-segs="12"></div>
+                  <div class="player-time vfd"><span>0:12</span><span>extrait 0:30</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="res"><img src="https://cdn-images.dzcdn.net/images/cover/e80ac5d8f195bfe4a8ac37f7a0ed5b27/250x250-000000-80-0-0.jpg" alt=""><div style="min-width:0"><b>Rock This Town</b><span>Stray Cats</span></div><em>2:37</em></div>
+            <div class="res"><img src="https://cdn-images.dzcdn.net/images/cover/052f3aeebf108bf7a28b0a82c5a1869d/250x250-000000-80-0-0.jpg" alt=""><div style="min-width:0"><b>Hey Hey Hey</b><span>Katy Perry</span></div><em>3:35</em></div>
+            <div class="res"><img src="https://cdn-images.dzcdn.net/images/cover/52c5c30fa37ce4aeb1708a714cc670fd/250x250-000000-80-0-0.jpg" alt=""><div style="min-width:0"><b>Wild World</b><span>Yusuf / Cat Stevens</span></div><em>3:18</em></div>
+            <div class="res"><img src="https://cdn-images.dzcdn.net/images/cover/d0939bf44d5a043db8a237f65cceb2e4/250x250-000000-80-0-0.jpg" alt=""><div style="min-width:0"><b>The Greatest</b><span>Cat Power</span></div><em>3:22</em></div>
+            <div class="res"><img src="https://cdn-images.dzcdn.net/images/cover/fc6e0a55a477939478b15a5cf35f1933/250x250-000000-80-0-0.jpg" alt=""><div style="min-width:0"><b>Seamus</b><span>Pink Floyd</span></div><em>2:14</em></div>
+          </div>
+        </section>
+      </div>
+      <div class="post-dock">
+        <p><b>Définitif une fois posté.</b> Il part dans tes 3 groupes : La Coloc, Le Taf et Les Lycéens.</p>
+        <button class="key-alu"><i class="led on-red" style="width:9px;height:9px"></i>Poster ce son</button>
+      </div>
+    </div>
+    <div class="homebar"></div>
+  </div></div>
+  <figcaption><b>Recherche</b>La liste de résultats fonctionne comme le cadran d'un tuner : l'aiguille ambrée se cale sur le son que tu écoutes. Le voyant rouge d'enregistrement s'allume sur le bouton pour poster.</figcaption>
+</figure>
+
+<!-- ============ 4. TODAY, AFTER POST (VU) ============ -->
+<figure>
+  <div class="device"><div class="phone brushed">
+    <div class="island"></div>
+    <div class="statusbar"><span>16:05</span><span class="icons" data-icons></span></div>
+    <div class="app">
+      <div class="app-body">
+        <div class="app-head">
+          <span class="brand">Angelus</span>
+          <button class="selector" aria-label="Groupe : La Coloc, 1 sur 3">La Coloc
+            <span class="leds"><i class="led on-cyan"></i><i class="led"></i><i class="led"></i></span>
+            <svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="#9A9DA3" stroke-width="1.8"><path d="M1 1.5l5 5 5-5"/></svg>
+          </button>
+        </div>
+        <section class="hero-mini glass">
+          <div class="t vfd">Le son que ton chat écoute en cachette</div>
+          <div class="c vfd"><small>Vote clos dans</small><div>7 h 55</div></div>
+        </section>
+
+        <div class="section-label"><b>Les sons de La Coloc</b><span>Touche un cadran pour voter</span></div>
+        <div class="feed">
+          <div class="row is-own">
+            <div class="cov"><img src="https://cdn-images.dzcdn.net/images/cover/21d780d99cbe7eb5e1d8b5d31fce28c8/250x250-000000-80-0-0.jpg" alt=""><span class="pl" data-play></span></div>
+            <div class="info"><b>The Lovecats</b><span class="ar">The Cure</span><span class="by">Ton son <span class="badge ontime"><i class="led on-cyan"></i>à l'heure</span></span></div>
+            <button class="meter" disabled aria-label="Ton son, 1 vote"><span class="dial" data-vu="1" data-d=".2s"></span><span class="who">Max</span></button>
+          </div>
+          <div class="row">
+            <div class="cov"><img src="https://cdn-images.dzcdn.net/images/cover/41446548ab08e024ccf7b8211067e3bb/250x250-000000-80-0-0.jpg" alt=""><span class="pl" data-play></span></div>
+            <div class="info"><b>Everybody Wants to Be a Cat</b><span class="ar">Sander Melodies</span><span class="by">Inès</span></div>
+            <button class="meter is-mine" aria-pressed="true" aria-label="Ton vote. Son d'Inès, 3 votes"><span class="dial" data-vu="3" data-d=".32s"></span><span class="who">Toi, Léa, Tom</span></button>
+          </div>
+          <div class="row">
+            <div class="cov"><img src="https://cdn-images.dzcdn.net/images/cover/1890d1017e74e7b998efede3f9304558/250x250-000000-80-0-0.jpg" alt=""><span class="pl" data-play></span></div>
+            <div class="info"><b>Stray Cat Strut</b><span class="ar">Stray Cats</span><span class="by">Tom</span></div>
+            <button class="meter" aria-pressed="false" aria-label="Voter pour le son de Tom, 1 vote"><span class="dial" data-vu="1" data-d=".44s"></span><span class="who">Inès</span></button>
+          </div>
+          <div class="row">
+            <div class="cov"><img src="https://cdn-images.dzcdn.net/images/cover/9a7dcc522995724996df71d474e75e32/250x250-000000-80-0-0.jpg" alt=""><span class="pl" data-play></span></div>
+            <div class="info"><b>What's New Pussycat?</b><span class="ar">Tom Jones</span><span class="by">Léa</span></div>
+            <button class="meter" aria-pressed="false" aria-label="Voter pour le son de Léa, aucun vote"><span class="dial" data-vu="0" data-d=".56s"></span><span class="who none">aucun vote</span></button>
+          </div>
+          <div class="row">
+            <div class="cov"><img src="https://cdn-images.dzcdn.net/images/cover/141c9639bd95e780ac26e4a0a527e768/250x250-000000-80-0-0.jpg" alt=""><span class="pl" data-play></span></div>
+            <div class="info"><b>Cat People (Putting Out Fire)</b><span class="ar">David Bowie</span><span class="by">Max <span class="badge late"><i class="led on-red"></i>en retard</span></span></div>
+            <button class="meter" aria-pressed="false" aria-label="Voter pour le son de Max, aucun vote"><span class="dial" data-vu="0" data-d=".68s"></span><span class="who none">aucun vote</span></button>
+          </div>
+          <div class="row is-waiting">
+            <div class="slot"></div>
+            <div class="info"><b style="color:var(--alu)">Sacha</b><span class="ar">n'a pas encore posté</span></div>
+          </div>
+        </div>
+      </div>
+      <nav class="tabbar" data-tabs="0"></nav>
+    </div>
+    <div class="homebar"></div>
+  </div></div>
+  <figcaption><b>Aujourd'hui, après avoir posté</b>Chaque son a son VU-mètre : l'aiguille montre sa part des votes en direct, avec les prénoms des votants sous le cadran. Ton vote s'allume en cyan.</figcaption>
+</figure>
+
+<!-- ============ 5. PLAYLIST ============ -->
+<figure>
+  <div class="device"><div class="phone brushed">
+    <div class="island"></div>
+    <div class="statusbar"><span>16:08</span><span class="icons" data-icons></span></div>
+    <div class="app">
+      <div class="app-body">
+        <div class="app-head">
+          <span class="brand">Angelus</span>
+          <button class="selector" aria-label="Groupe : La Coloc, 1 sur 3">La Coloc
+            <span class="leds"><i class="led on-cyan"></i><i class="led"></i><i class="led"></i></span>
+            <svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="#9A9DA3" stroke-width="1.8"><path d="M1 1.5l5 5 5-5"/></svg>
+          </button>
+        </div>
+        <h2 class="page-title">Playlist de La Coloc</h2>
+        <p class="page-sub">Le son gagnant de chaque jour</p>
+        <section class="deck glass">
+          <div class="counter" aria-label="6 sons"><span>0</span><span>0</span><span>6</span></div>
+          <div class="deck-meta"><b>gagnants</b><span>29 min</span></div>
+          <button class="key-alu"><svg width="14" height="16" viewBox="0 0 14 16" fill="#1E1F22"><path d="M1 1.2v13.6a.8.8 0 0 0 1.2.7l11-6.8a.8.8 0 0 0 0-1.4l-11-6.8A.8.8 0 0 0 1 1.2z"/></svg>Tout écouter</button>
+        </section>
+        <div class="tracks">
+          <div class="track"><span class="date"><strong>13</strong>sept.</span><img src="https://cdn-images.dzcdn.net/images/cover/5b59dc18e109515420f8237719bd2186/250x250-000000-80-0-0.jpg" alt=""><div class="txt"><span class="th">L'hymne officiel de ta procrastination</span><b>The Lazy Song</b><span class="ar">Bruno Mars</span></div><div class="win"><b>Tom</b><br><span>4 votes</span></div></div>
+          <div class="track"><span class="date"><strong>12</strong>sept.</span><img src="https://cdn-images.dzcdn.net/images/cover/9bc5fa03c897154eded3719e512567cc/250x250-000000-80-0-0.jpg" alt=""><div class="txt"><span class="th">Un son pour annoncer une rupture à ta plante</span><b>Total Eclipse of the Heart</b><span class="ar">Bonnie Tyler</span></div><div class="win"><b>Léa</b><br><span>5 votes</span></div></div>
+          <div class="track"><span class="date"><strong>11</strong>sept.</span><img src="https://cdn-images.dzcdn.net/images/cover/d1c5b871de953d5c7c8459a83d67ca1b/250x250-000000-80-0-0.jpg" alt=""><div class="txt"><span class="th">La musique d'attente de l'enfer</span><b>The Girl From Ipanema</b><span class="ar">Stan Getz</span></div><div class="win"><b>Max</b><br><span>3 votes</span></div></div>
+          <div class="track"><span class="date"><strong>10</strong>sept.</span><img src="https://cdn-images.dzcdn.net/images/cover/be2f17b7e41a148c0bd161491d6f2279/250x250-000000-80-0-0.jpg" alt=""><div class="txt"><span class="th">Le générique de ta garde à vue</span><b>Bad Boys</b><span class="ar">Inner Circle</span></div><div class="win"><b>Inès</b><br><span>4 votes</span></div></div>
+          <div class="track"><span class="date"><strong>9</strong>sept.</span><img src="https://cdn-images.dzcdn.net/images/cover/bb61a054494a99eba6467d8364e3380c/250x250-000000-80-0-0.jpg" alt=""><div class="txt"><span class="th">Le slow de deux pigeons amoureux</span><b>Careless Whisper</b><span class="ar">George Michael</span></div><div class="win"><b>Toi</b><br><span>6 votes</span></div></div>
+          <div class="track"><span class="date"><strong>8</strong>sept.</span><img src="https://cdn-images.dzcdn.net/images/cover/b870579c8650cd59b1cce656dde2ef17/250x250-000000-80-0-0.jpg" alt=""><div class="txt"><span class="th">Ce que chante ton frigo la nuit</span><b>Around the World</b><span class="ar">Daft Punk</span></div><div class="win"><b>Sacha</b><br><span>3 votes</span></div></div>
+        </div>
+      </div>
+      <nav class="tabbar" data-tabs="1"></nav>
+    </div>
+    <div class="homebar"></div>
+  </div></div>
+  <figcaption><b>Playlist du groupe</b>Le compteur de la platine cassette indique le nombre de gagnants. Chaque ligne rappelle le thème du jour et le nom du gagnant.</figcaption>
+</figure>
+
+<!-- ============ 6. INVITE ============ -->
+<figure>
+  <div class="device"><div class="phone brushed">
+    <div class="island"></div>
+    <div class="statusbar"><span>16:10</span><span class="icons" data-icons></span></div>
+    <div class="app">
+      <div class="app-body">
+        <div class="app-head">
+          <span class="brand">Angelus</span>
+          <button class="selector" aria-label="Groupe : La Coloc, 1 sur 3">La Coloc
+            <span class="leds"><i class="led on-cyan"></i><i class="led"></i><i class="led"></i></span>
+            <svg width="12" height="8" viewBox="0 0 12 8" fill="none" stroke="#9A9DA3" stroke-width="1.8"><path d="M1 1.5l5 5 5-5"/></svg>
+          </button>
+        </div>
+        <h2 class="page-title">Rejoindre La Coloc</h2>
+        <p class="page-sub">Fais scanner ce code à un ami : il arrive directement dans le groupe.</p>
+        <section class="qr-window glass">
+          <div class="qr-panel" data-qr="https://angelus.app/join/K7P2QX" role="img" aria-label="QR code pour rejoindre La Coloc"></div>
+          <div class="qr-code vfd"><small>Code</small>K7P2QX</div>
+        </section>
+        <div class="members-head"><b>Membres</b><span>6 / 30 membres</span></div>
+        <div class="members">
+          <div class="member"><span class="knob me">Toi</span>Toi</div>
+          <div class="member"><span class="knob">I</span>Inès</div>
+          <div class="member"><span class="knob">T</span>Tom</div>
+          <div class="member"><span class="knob">L</span>Léa</div>
+          <div class="member"><span class="knob">M</span>Max</div>
+          <div class="member"><span class="knob">S</span>Sacha</div>
+        </div>
+        <div class="invite-dock">
+          <button class="key-dark">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#C9CCD1" stroke-width="2"><path d="M1 6V3a2 2 0 0 1 2-2h3M14 1h3a2 2 0 0 1 2 2v3M19 14v3a2 2 0 0 1-2 2h-3M6 19H3a2 2 0 0 1-2-2v-3M5 10h10"/></svg>
+            Scanner un code
+          </button>
+        </div>
+      </div>
+      <nav class="tabbar" data-tabs="2"></nav>
+    </div>
+    <div class="homebar"></div>
+  </div></div>
+  <figcaption><b>Invitation</b>Le QR code s'affiche en sombre sur un afficheur rétroéclairé : lisible par n'importe quelle caméra, et toujours dans l'univers de la chaîne.</figcaption>
+</figure>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function(){
+  // Status bar icons
+  var icons = '<svg width="18" height="12" viewBox="0 0 18 12" fill="#F4F5F6"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>' +
+    '<svg width="16" height="12" viewBox="0 0 16 12" fill="#F4F5F6"><path d="M8 2.2c2.3 0 4.4.9 6 2.4l1.2-1.3A10.3 10.3 0 0 0 8 .4 10.3 10.3 0 0 0 .8 3.3L2 4.6a8.5 8.5 0 0 1 6-2.4z"/><path d="M8 5.8c1.3 0 2.5.5 3.4 1.3l1.2-1.3A6.8 6.8 0 0 0 8 4a6.8 6.8 0 0 0-4.6 1.8l1.2 1.3A5 5 0 0 1 8 5.8z"/><path d="M8 9.2l1.9-2a2.9 2.9 0 0 0-3.8 0z" transform="translate(0 1.6)"/></svg>' +
+    '<svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x=".5" y=".5" width="23" height="12" rx="3.5" stroke="#F4F5F6" opacity=".4"/><rect x="2" y="2" width="17" height="9" rx="2" fill="#F4F5F6"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2z" fill="#F4F5F6" opacity=".45"/></svg>';
+  document.querySelectorAll('[data-icons]').forEach(function(el){ el.innerHTML = icons; });
+
+  // Tab bar
+  var tabs = [
+    ['Aujourd\'hui','<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21.5h4"/><path d="M12 5V3"/></svg>'],
+    ['Playlist','<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="11" r="2"/><circle cx="16" cy="11" r="2"/><path d="M6 19l2-3.5h8l2 3.5"/></svg>'],
+    ['Groupe','<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18.2 14.8c1.8.8 3 2.5 3.3 5.2"/></svg>']
+  ];
+  document.querySelectorAll('[data-tabs]').forEach(function(nav){
+    var active = +nav.getAttribute('data-tabs');
+    nav.innerHTML = tabs.map(function(t,i){
+      return '<button class="tab'+(i===active?' is-active':'')+'"'+(i===active?' aria-current="page"':'')+'><i class="led"></i>'+t[1]+'<span>'+t[0]+'</span></button>';
+    }).join('');
+  });
+
+  // Play glyphs on covers
+  document.querySelectorAll('[data-play]').forEach(function(el){
+    el.innerHTML = '<svg width="9" height="10" viewBox="0 0 9 10" fill="#EEF0F2"><path d="M1 .8v8.4a.6.6 0 0 0 .9.5l6.7-4.2a.6.6 0 0 0 0-1L1.9.3A.6.6 0 0 0 1 .8z"/></svg>';
+  });
+
+  // App icon
+  var appicon = '<svg viewBox="0 0 40 40" width="40" height="40"><defs><radialGradient id="ai-g" cx="50%" cy="100%" r="90%"><stop offset="0" stop-color="#FFE3A6"/><stop offset=".6" stop-color="#F2E6C9"/><stop offset="1" stop-color="#C99A55"/></radialGradient></defs><rect width="40" height="40" fill="#2A2B2E"/><rect x="5" y="9" width="30" height="20" rx="2.5" fill="url(#ai-g)"/><path d="M9.5 24 A 13 13 0 0 1 30.5 24" fill="none" stroke="#2A2B2E" stroke-width="1.2"/><path d="M26.5 19.2 A 13 13 0 0 1 30.5 24" fill="none" stroke="#C8321F" stroke-width="2.2"/><line x1="20" y1="30" x2="25" y2="15" stroke="#1E1F22" stroke-width="1.4"/><rect x="5" y="27" width="30" height="2" fill="#1E1F22" opacity=".35"/><circle cx="20" cy="34" r="1.6" fill="#5CF2E3"/></svg>';
+  document.querySelectorAll('[data-appicon]').forEach(function(el){ el.innerHTML = appicon; });
+
+  // LED progress segments
+  document.querySelectorAll('[data-segs]').forEach(function(el){
+    var on = +el.getAttribute('data-segs'), h = '';
+    for (var i=0;i<30;i++) h += '<i'+(i<on?' class="on"':'')+'></i>';
+    el.innerHTML = h;
+  });
+
+  // VU meters: needle angle = share of votes cast (5 votes today)
+  var TOTAL = 5, MIN = -46, MAX = 46, uid = 0;
+  function pt(a, r){ var rad = a*Math.PI/180; return [50 + r*Math.sin(rad), 72 - r*Math.cos(rad)]; }
+  function arc(a1, a2, r){ var p1 = pt(a1,r), p2 = pt(a2,r); return 'M'+p1[0].toFixed(2)+' '+p1[1].toFixed(2)+' A '+r+' '+r+' 0 0 1 '+p2[0].toFixed(2)+' '+p2[1].toFixed(2); }
+  function vu(votes, delay){
+    var id = 'vu' + (uid++), share = votes / TOTAL, angle = MIN + share*(MAX-MIN), ticks = '';
+    [-46,-35,-24,-13,-2,9,20,33,46].forEach(function(a,i){
+      var major = i%2===0, a1 = pt(a,52), a2 = pt(a, major?60:57);
+      ticks += '<line x1="'+a1[0].toFixed(2)+'" y1="'+a1[1].toFixed(2)+'" x2="'+a2[0].toFixed(2)+'" y2="'+a2[1].toFixed(2)+'" stroke="'+(a>=20?'#B8321F':'#2A2B2E')+'" stroke-width="'+(major?1.1:.8)+'"/>';
+    });
+    return '<svg viewBox="0 0 100 47" width="98" height="46" aria-hidden="true">' +
+      '<defs><radialGradient id="'+id+'b" cx="50%" cy="105%" r="85%"><stop offset="0" stop-color="#FFE7B3"/><stop offset=".55" stop-color="#F2E6C9"/><stop offset="1" stop-color="#CFA868"/></radialGradient>' +
+      '<linearGradient id="'+id+'s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".28"/><stop offset=".35" stop-color="#000" stop-opacity="0"/></linearGradient></defs>' +
+      '<rect width="100" height="47" fill="url(#'+id+'b)"/>' +
+      '<path d="'+arc(-46,20,52)+'" fill="none" stroke="#2A2B2E" stroke-width=".8"/>' +
+      '<path d="'+arc(20,46,53.5)+'" fill="none" stroke="#C8321F" stroke-width="3"/>' + ticks +
+      '<text x="50" y="38" text-anchor="middle" font-family="Michroma, sans-serif" font-size="6.5" fill="#6E5B38">VU</text>' +
+      '<g class="needle" style="--a:'+angle.toFixed(1)+'deg;--d:'+delay+'"><line x1="50" y1="72" x2="50" y2="10" stroke="#1B1C1F" stroke-width="1.1" stroke-linecap="round"/></g>' +
+      '<rect y="42" width="100" height="5" fill="#1B1C1F" opacity=".55"/>' +
+      '<rect width="100" height="47" fill="url(#'+id+'s)"/>' +
+      '</svg>';
+  }
+  document.querySelectorAll('[data-vu-big]').forEach(function(el){
+    el.innerHTML = vu(+el.getAttribute('data-vu-big'), '0s').replace('class="needle"','class="needle is-static"').replace('width="98" height="46"','width="300" height="141"');
+  });
+  document.querySelectorAll('[data-vu]').forEach(function(el){
+    el.innerHTML = vu(+el.getAttribute('data-vu'), el.getAttribute('data-d') || '.25s');
+  });
+
+  // QR code
+  document.querySelectorAll('[data-qr]').forEach(function(el){
+    if (typeof qrcode !== 'function') { el.innerHTML = '<p style="color:#0C1416;font-size:15px;margin:0">QR code indisponible hors ligne</p>'; return; }
+    var qr = qrcode(0, 'M'); qr.addData(el.getAttribute('data-qr')); qr.make();
+    var n = qr.getModuleCount(), q = 2, size = n + q*2, d = '';
+    for (var r=0;r<n;r++) for (var c=0;c<n;c++) if (qr.isDark(r,c)) d += 'M'+(c+q)+' '+(r+q)+'h1v1h-1z';
+    el.innerHTML = '<svg viewBox="0 0 '+size+' '+size+'" shape-rendering="crispEdges"><path d="'+d+'" fill="#0C1416"/></svg>';
+  });
+})();
+</script>
+</body>
+</html>

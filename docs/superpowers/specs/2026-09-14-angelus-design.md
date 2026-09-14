@@ -3,7 +3,7 @@
 > Le BeReal de la musique : chaque jour, à une heure surprise, un thème absurde tombe. Chacun partage un son qui colle au thème avec ses groupes d'amis, et chaque groupe vote pour son préféré.
 
 Date : 2026-09-14
-Statut : validé (hors direction artistique, en cours d'itération)
+Statut : validé (DA : Radio pirate)
 
 ## 1. Principes
 
@@ -226,12 +226,37 @@ firebase.json
 
 ## 11. Direction artistique
 
-En cours. 3 propositions dans `docs/da/` :
-- **Liturgie pop** ;
-- **Radio pirate** ;
-- **Hi-fi de nuit**.
+**Retenue : Radio pirate.** Maquette de référence : `docs/da/da-2-radio-pirate.html`. Les deux autres propositions (`da-1-liturgie-pop.html`, `da-3-hifi-de-nuit.html`) sont conservées pour mémoire.
 
-La DA retenue sera documentée ici (palette, typographies, composants signature) avant l'implémentation de l'UI.
+Angelus émet comme une radio clandestine qui imprime son programme à la photocopieuse. Du papier, du toner, un surligneur et un marqueur rouge, rien d'autre.
+
+### Palette
+
+| Nom | Hex | Usage |
+|---|---|---|
+| Papier | `#E9E9E5` | fond, avec grain de toner léger |
+| Papier neuf | `#F7F7F3` | bandes découpées, stickers, carte « ton son » |
+| Toner | `#000000` | texte, traits, boutons pleins |
+| Surligneur | `#F2FF3A` | compte à rebours, titre sélectionné, onglet actif. Toujours une ligne entière, jamais un seul mot |
+| Marqueur | `#E3261B` | bâtons de vote, entourage « ton vote », badge « en retard ». Jamais porteur de texte (contraste) |
+| Trame | `#8A8A86` | similis, éléments inactifs |
+
+### Typographies
+
+- **Big Shoulders Display**, graisses 800 et 900 : thèmes, titres de sons, gros chiffres, boutons.
+- **Courier Prime**, 400 et 700 : tout le reste, comme tapé à la machine.
+- Chargement via `expo-font` (paquets `@expo-google-fonts/big-shoulders-display` et `@expo-google-fonts/courier-prime`, à vérifier à l'implémentation).
+
+### Composants signature
+
+- **Thème** : bande de papier neuf découpée et scotchée de travers (±2° max), scotch translucide.
+- **Votes live** : bâtons de comptage SVG irréguliers au marqueur rouge, barrés à 5. Ton vote est entouré au marqueur.
+- **Pochettes** : simili noir et blanc tramé.
+- **Sons pas encore débloqués** : photocopie ratée, barrée d'une trace de toner, avec un scotch « caché ».
+- **Playlist** : jaquette de cassette dont la tranche porte « {groupe}, face A ».
+- **Invitation** : QR code sur un sticker scotché, avec le code du groupe.
+- **Animation unique** : tampon « Posté {heure} » quand on poste. Désactivée si l'utilisateur a demandé à réduire les animations.
+- **Mise en page** : collage contrôlé sur une grille lisible, alignement à gauche, rotations légères sur quelques éléments seulement.
 
 ## 12. Points ouverts
 
