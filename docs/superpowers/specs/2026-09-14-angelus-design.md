@@ -214,15 +214,7 @@ firebase.json
 
 ## 10. Tests
 
-- **Règles Firestore** : `@firebase/rules-unit-testing` sur l'émulateur. Cas couverts :
-  - thème invisible avant le drop ;
-  - poster pour voir ;
-  - post unique et définitif ;
-  - `late` correct ;
-  - vote : membre, a posté, pas pour soi, journée live ;
-  - rejoindre un groupe : s'ajouter soi seulement, limite de 30.
-- **`tick`** : tests unitaires des fonctions pures (décision d'action selon l'heure et l'état, tirage de créneau, calcul des gagnants et ex æquo).
-- Pas de tests UI en V1.
+Pas de tests automatisés en V1 (décision du 2026-09-14, app entre amis). Vérification par compilation TypeScript, puis manuellement en production (logs de `tick`, console Firestore, app).
 
 ## 11. Direction artistique
 

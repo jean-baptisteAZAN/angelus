@@ -6,55 +6,54 @@
 
 **Architecture :**
 - Aucune fonction serveur appelable par l'app : elle écrit directement dans Firestore, et les règles de sécurité font la police.
-- Une seule Cloud Function planifiée, `tick`, tourne toutes les 15 min en heure de Paris. Elle lit l'état de la journée et une fonction pure (`decideActions`) décide quoi faire. Les effets (Firestore, Gemini, push Expo) sont injectés, donc testables sur l'émulateur.
+- Une seule Cloud Function planifiée, `tick`, tourne toutes les 15 min en heure de Paris. Elle lit l'état de la journée et une fonction pure (`decideActions`) décide quoi faire. Les effets (Firestore, Gemini, push Expo) sont passés en paramètres de `runTick`.
 
 **Tech Stack :**
 - Firebase : Firestore, Cloud Functions 2e génération (`firebase-functions` 7.3.2, `firebase-admin` 14.4.0), runtime Node 22.
 - TypeScript 6, en modules ESM.
-- Vitest 5 et `@firebase/rules-unit-testing` 5.
 - `@google/genai` 2.22 (Gemini) et `expo-server-sdk` 7.2 (push).
 
-**Spec :** `docs/superpowers/specs/2026-09-14-angelus-design.md`. Sections implémentées : §2 (règles du jeu), §5 (données), §6 (règles de sécurité), §7 (`tick`), §10 (tests). Le client Expo fera l'objet d'un plan séparé.
+**Spec :** `docs/superpowers/specs/2026-09-14-angelus-design.md`. Sections implémentées : §2 (règles du jeu), §5 (données), §6 (règles de sécurité), §7 (`tick`). Le client Expo fera l'objet d'un plan séparé.
 
 ## Global Constraints
 
 - Tout le backend vit dans `functions/` (package npm séparé) plus `firebase.json`, `firestore.rules` et `firestore.indexes.json` à la racine. Ne pas toucher au code de l'app Expo, sauf l'exclusion de `functions` dans le `tsconfig.json` racine (tâche 1).
-- **Modules** : `"type": "module"`, TypeScript `module`/`moduleResolution` = `NodeNext`. Les imports relatifs finissent en `.js` (`import { x } from "./dates.js"`), y compris depuis les tests.
+- **Modules** : `"type": "module"`, TypeScript `module`/`moduleResolution` = `NodeNext`. Les imports relatifs finissent en `.js` (`import { x } from "./dates.js"`).
 - **Versions exactes** :
   - dépendances : `firebase-functions@7.3.2`, `firebase-admin@14.4.0`, `@google/genai@2.22.0`, `expo-server-sdk@7.2.0` ;
-  - dev : `typescript@~6.0.3`, `vitest@5.0.0`, `@firebase/rules-unit-testing@5.0.2`, `firebase@12.19.0`.
-- **Node et Java** : Node 22 (runtime `nodejs22`). L'émulateur Firestore exige **Java 21+**. Sur cette machine, lancer avant toute commande émulateur : `export JAVA_HOME=/opt/homebrew/opt/openjdk@21 PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"`. CLI Firebase globale `firebase` ≥ 15.
+  - dev : `typescript@~6.0.3`.
+- **Node** : Node 22 (runtime `nodejs22`). CLI Firebase globale `firebase` ≥ 15.
 - **Temps** : fuseau unique `Europe/Paris`. Clé de journée : `YYYY-MM-DD` en heure de Paris. Créneaux de drop de 10:00 à 19:45, par pas de 15 min. Rappel à drop + 45 min, résultats à 09:00, « à l'heure » = drop + 1 h.
-- **Projet** : les tests utilisent le projet fictif `demo-angelus`, sans projet Firebase réel. Le projet réel n'intervient qu'à la tâche 9.
+- **Projet** : aucun projet Firebase réel avant la tâche 2 (déploiement).
 - **Textes des notifications** en français, exactement comme dans `functions/src/messages.ts`.
-- **Tests** :
-  - unitaires : `npm test` depuis `functions/` ;
-  - émulateur : `npm run test:emulator` depuis `functions/`, avec Java 21 exporté.
+- **Pas de tests automatisés** (décision utilisateur) : la vérification se fait par compilation TypeScript, puis en production à la tâche 2.
 
 ---
 
-### Task 1: Squelette Firebase et helpers de date
+### Task 1: Backend complet (config, règles, fonction `tick`)
+
+Tout le code ci-dessous est à recopier **tel quel**. Il a déjà été compilé et validé.
 
 **Files:**
-- Create: `firebase.json`
-- Create: `firestore.indexes.json`
-- Modify: `tsconfig.json` (racine : exclure `functions`)
-- Modify: `.gitignore` (racine : artefacts Firebase)
-- Create: `functions/package.json`
-- Create: `functions/tsconfig.json`
-- Create: `functions/.gitignore`
-- Create: `functions/src/dates.ts`
-- Test: `functions/test/unit/dates.test.ts`
+- Create: `firebase.json`, `firestore.indexes.json`, `firestore.rules`
+- Modify: `tsconfig.json` (racine : exclure `functions`), `.gitignore` (racine : artefacts Firebase)
+- Create: `functions/package.json`, `functions/tsconfig.json`, `functions/.gitignore`
+- Create: `functions/src/types.ts`, `functions/src/dates.ts`, `functions/src/schedule.ts`, `functions/src/winners.ts`, `functions/src/messages.ts`, `functions/src/theme.ts`, `functions/src/push.ts`, `functions/src/tick.ts`, `functions/src/index.ts`
 
 **Interfaces :**
 - Consomme : rien.
-- Produit (`functions/src/dates.ts`) :
-  - `parisDateKey(instant: Date): string` : date de Paris `"YYYY-MM-DD"` ;
-  - `previousDateKey(dateKey: string): string` ;
-  - `parisTimeToDate(dateKey: string, minutesOfDay: number): Date` : instant où l'horloge de Paris affiche `minutesOfDay` ce jour-là ;
-  - `addMinutes(instant: Date, minutes: number): Date`.
+- Produit :
+  - la Cloud Function `tick` (export de `functions/lib/index.js`) ;
+  - les règles Firestore de la spec §6, dont dépendra l'app. Chemins et champs :
+    - `users/{uid}` : `{ name, createdAt }` ;
+    - `pushTokens/{uid}` : `{ token, updatedAt }` ;
+    - `groups/{gid}` : `{ name, ownerId, memberIds }` ;
+    - `groups/{gid}/playlist/{date}_{uid}` : `{ date, theme, winnerUid, winnerName, track, votes }` ;
+    - `groups/{gid}/days/{date}/votes/{uid}` : `{ postUid, updatedAt }` ;
+    - `days/{date}` : `{ theme, dropAt, status, remindedAt?, resultsSentAt? }` ;
+    - `days/{date}/posts/{uid}` : `{ track: { deezerId, title, artist, cover }, postedAt, late }`.
 
-- [ ] **Step 1 : Créer la config Firebase racine**
+- [ ] **Step 1 : Config Firebase racine**
 
 `firebase.json` :
 
@@ -113,405 +112,7 @@ Ajouter à la fin du `.gitignore` racine :
 .secret.local
 ```
 
-- [ ] **Step 3 : Créer le package `functions`**
-
-`functions/package.json` :
-
-```json
-{
-  "name": "angelus-functions",
-  "private": true,
-  "type": "module",
-  "main": "lib/index.js",
-  "engines": {
-    "node": "22"
-  },
-  "scripts": {
-    "build": "tsc",
-    "test": "vitest run test/unit",
-    "test:emulator": "firebase emulators:exec --only firestore --project demo-angelus --config ../firebase.json \"vitest run test/emulator --no-file-parallelism --test-timeout=30000\""
-  }
-}
-```
-
-`functions/tsconfig.json` :
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2023",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "outDir": "lib",
-    "rootDir": "src",
-    "strict": true,
-    "skipLibCheck": true,
-    "sourceMap": true
-  },
-  "include": ["src"]
-}
-```
-
-`functions/.gitignore` :
-
-```gitignore
-node_modules/
-lib/
-*.log
-```
-
-Installer les dépendances (depuis `functions/`) :
-
-```bash
-cd functions
-npm install firebase-functions@7.3.2 firebase-admin@14.4.0 @google/genai@2.22.0 expo-server-sdk@7.2.0
-npm install -D typescript@~6.0.3 vitest@5.0.0 @firebase/rules-unit-testing@5.0.2 firebase@12.19.0
-```
-
-Attendu : `package.json` contient les 4 `dependencies` et les 4 `devDependencies`, et `package-lock.json` est créé.
-
-- [ ] **Step 4 : Écrire le test qui échoue**
-
-`functions/test/unit/dates.test.ts` :
-
-```ts
-import { describe, expect, it } from "vitest";
-import { addMinutes, parisDateKey, parisTimeToDate, previousDateKey } from "../../src/dates.js";
-
-describe("parisDateKey", () => {
-  it("uses the Paris calendar day", () => {
-    expect(parisDateKey(new Date("2026-09-14T21:59:00Z"))).toBe("2026-09-14");
-    expect(parisDateKey(new Date("2026-09-14T22:00:00Z"))).toBe("2026-09-15");
-  });
-});
-
-describe("previousDateKey", () => {
-  it("crosses month and year boundaries", () => {
-    expect(previousDateKey("2026-03-01")).toBe("2026-02-28");
-    expect(previousDateKey("2027-01-01")).toBe("2026-12-31");
-  });
-});
-
-describe("parisTimeToDate", () => {
-  it("handles summer time (UTC+2)", () => {
-    expect(parisTimeToDate("2026-09-14", 14 * 60 + 37).toISOString()).toBe("2026-09-14T12:37:00.000Z");
-  });
-  it("handles winter time (UTC+1)", () => {
-    expect(parisTimeToDate("2026-01-10", 10 * 60).toISOString()).toBe("2026-01-10T09:00:00.000Z");
-  });
-  it("handles DST switch days", () => {
-    expect(parisTimeToDate("2026-03-29", 0).toISOString()).toBe("2026-03-28T23:00:00.000Z");
-    expect(parisTimeToDate("2026-03-29", 10 * 60).toISOString()).toBe("2026-03-29T08:00:00.000Z");
-    expect(parisTimeToDate("2026-10-25", 10 * 60).toISOString()).toBe("2026-10-25T09:00:00.000Z");
-  });
-});
-
-describe("addMinutes", () => {
-  it("adds minutes", () => {
-    expect(addMinutes(new Date("2026-09-14T12:00:00Z"), 45).toISOString()).toBe("2026-09-14T12:45:00.000Z");
-  });
-});
-```
-
-- [ ] **Step 5 : Vérifier qu'il échoue**
-
-Run : `cd functions && npx vitest run test/unit/dates.test.ts`
-Expected : FAIL, l'import `../../src/dates.js` est introuvable.
-
-- [ ] **Step 6 : Implémenter**
-
-`functions/src/dates.ts` :
-
-```ts
-const TIME_ZONE = "Europe/Paris";
-
-const dateKeyFormat = new Intl.DateTimeFormat("en-CA", {
-  timeZone: TIME_ZONE,
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-});
-
-const partsFormat = new Intl.DateTimeFormat("en-US", {
-  timeZone: TIME_ZONE,
-  hourCycle: "h23",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-});
-
-/** Paris calendar date of an instant, as "YYYY-MM-DD". */
-export function parisDateKey(instant: Date): string {
-  return dateKeyFormat.format(instant);
-}
-
-export function previousDateKey(dateKey: string): string {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  return new Date(Date.UTC(year, month - 1, day - 1)).toISOString().slice(0, 10);
-}
-
-/** Instant at which Paris wall-clock time `minutesOfDay` occurs on `dateKey`. */
-export function parisTimeToDate(dateKey: string, minutesOfDay: number): Date {
-  const [year, month, day] = dateKey.split("-").map(Number);
-  const guess = Date.UTC(year, month - 1, day, 0, minutesOfDay);
-  return new Date(guess - parisOffsetMinutes(new Date(guess)) * 60_000);
-}
-
-export function addMinutes(instant: Date, minutes: number): Date {
-  return new Date(instant.getTime() + minutes * 60_000);
-}
-
-function parisOffsetMinutes(instant: Date): number {
-  const parts = Object.fromEntries(partsFormat.formatToParts(instant).map((p) => [p.type, p.value]));
-  const wallClockAsUtc = Date.UTC(
-    Number(parts.year),
-    Number(parts.month) - 1,
-    Number(parts.day),
-    Number(parts.hour),
-    Number(parts.minute),
-    Number(parts.second),
-  );
-  return (wallClockAsUtc - instant.getTime()) / 60_000;
-}
-```
-
-- [ ] **Step 7 : Vérifier que ça passe**
-
-Run : `cd functions && npx vitest run test/unit/dates.test.ts`
-Expected : PASS, 6 tests.
-
-- [ ] **Step 8 : Commit**
-
-```bash
-git add firebase.json firestore.indexes.json tsconfig.json .gitignore functions/package.json functions/package-lock.json functions/tsconfig.json functions/.gitignore functions/src/dates.ts functions/test/unit/dates.test.ts
-git commit -m "feat(functions): scaffold Firebase backend with Paris date helpers"
-```
-
----
-
-### Task 2: Règles de sécurité Firestore
-
-**Files:**
-- Create: `firestore.rules`
-- Test: `functions/test/emulator/rules.test.ts`
-
-**Interfaces :**
-- Consomme : `firebase.json` (tâche 1, qui déclare `firestore.rules` et le port émulateur 8080) et le script `test:emulator`.
-- Produit : les règles de la spec §6, dont dépendent l'app et `tick`. Chemins et champs :
-  - `users/{uid}` : `{ name, createdAt }` ;
-  - `pushTokens/{uid}` : `{ token, updatedAt }` ;
-  - `groups/{gid}` : `{ name, ownerId, memberIds }` ;
-  - `groups/{gid}/playlist/{id}` ;
-  - `groups/{gid}/days/{date}/votes/{uid}` : `{ postUid, updatedAt }` ;
-  - `days/{date}` : `{ theme, dropAt, status, remindedAt?, resultsSentAt? }` ;
-  - `days/{date}/posts/{uid}` : `{ track: { deezerId, title, artist, cover }, postedAt, late }`.
-
-- [ ] **Step 1 : Écrire les tests qui échouent**
-
-`functions/test/emulator/rules.test.ts` :
-
-```ts
-import { readFileSync } from "node:fs";
-import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
-import {
-  assertFails,
-  assertSucceeds,
-  initializeTestEnvironment,
-  type RulesTestEnvironment,
-} from "@firebase/rules-unit-testing";
-import {
-  arrayRemove,
-  arrayUnion,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  serverTimestamp,
-  setDoc,
-  Timestamp,
-  updateDoc,
-  where,
-} from "firebase/firestore";
-
-const DATE = "2026-09-14";
-const TRACK = { deezerId: 3135553, title: "The Lovecats", artist: "The Cure", cover: "https://cdn/x.jpg" };
-
-let env: RulesTestEnvironment;
-
-const db = (uid: string) => env.authenticatedContext(uid).firestore();
-
-async function seed(dayOverrides: Record<string, unknown> = {}, posts: string[] = []) {
-  await env.withSecurityRulesDisabled(async (ctx) => {
-    const admin = ctx.firestore();
-    await setDoc(doc(admin, "days", DATE), {
-      theme: "Le son que ton chat écoute en cachette",
-      dropAt: Timestamp.fromMillis(Date.now() - 10 * 60_000),
-      status: "live",
-      ...dayOverrides,
-    });
-    await setDoc(doc(admin, "groups", "g1"), { name: "La Coloc", ownerId: "alice", memberIds: ["alice", "bob", "carol"] });
-    for (const uid of posts) {
-      await setDoc(doc(admin, "days", DATE, "posts", uid), { track: TRACK, postedAt: Timestamp.now(), late: false });
-    }
-  });
-}
-
-beforeAll(async () => {
-  env = await initializeTestEnvironment({
-    projectId: "demo-angelus",
-    firestore: { rules: readFileSync("../firestore.rules", "utf8") },
-  });
-});
-beforeEach(async () => env.clearFirestore());
-afterAll(async () => env.cleanup());
-
-describe("days", () => {
-  it("hides a pending day", async () => {
-    await seed({ status: "pending" });
-    await assertFails(getDoc(doc(db("alice"), "days", DATE)));
-  });
-  it("shows a live day", async () => {
-    await seed();
-    await assertSucceeds(getDoc(doc(db("alice"), "days", DATE)));
-  });
-});
-
-describe("posts", () => {
-  it("creates an on-time post", async () => {
-    await seed();
-    await assertSucceeds(setDoc(doc(db("alice"), "days", DATE, "posts", "alice"), { track: TRACK, postedAt: serverTimestamp(), late: false }));
-  });
-  it("rejects a wrong late flag", async () => {
-    await seed();
-    await assertFails(setDoc(doc(db("alice"), "days", DATE, "posts", "alice"), { track: TRACK, postedAt: serverTimestamp(), late: true }));
-  });
-  it("requires late=true after one hour", async () => {
-    await seed({ dropAt: Timestamp.fromMillis(Date.now() - 2 * 3600_000) });
-    await assertFails(setDoc(doc(db("alice"), "days", DATE, "posts", "alice"), { track: TRACK, postedAt: serverTimestamp(), late: false }));
-    await assertSucceeds(setDoc(doc(db("alice"), "days", DATE, "posts", "alice"), { track: TRACK, postedAt: serverTimestamp(), late: true }));
-  });
-  it("rejects posting for someone else or on a pending day", async () => {
-    await seed();
-    await assertFails(setDoc(doc(db("alice"), "days", DATE, "posts", "bob"), { track: TRACK, postedAt: serverTimestamp(), late: false }));
-    await seed({ status: "pending" });
-    await assertFails(setDoc(doc(db("alice"), "days", DATE, "posts", "alice"), { track: TRACK, postedAt: serverTimestamp(), late: false }));
-  });
-  it("forbids updating a post", async () => {
-    await seed({}, ["alice"]);
-    await assertFails(updateDoc(doc(db("alice"), "days", DATE, "posts", "alice"), { late: true }));
-  });
-  it("lets only posters read posts, including list queries", async () => {
-    await seed({}, ["alice", "bob"]);
-    await assertFails(getDoc(doc(db("carol"), "days", DATE, "posts", "bob")));
-    await assertSucceeds(getDoc(doc(db("alice"), "days", DATE, "posts", "bob")));
-    await assertSucceeds(getDocs(query(collection(db("alice"), "days", DATE, "posts"), where("__name__", "in", ["alice", "bob"]))));
-    await assertFails(getDocs(collection(db("carol"), "days", DATE, "posts")));
-  });
-});
-
-describe("votes", () => {
-  const vote = (uid: string, postUid: string) =>
-    setDoc(doc(db(uid), "groups", "g1", "days", DATE, "votes", uid), { postUid, updatedAt: serverTimestamp() });
-
-  it("accepts a valid vote and a change of mind", async () => {
-    await seed({}, ["alice", "bob", "carol"]);
-    await assertSucceeds(vote("alice", "bob"));
-    await assertSucceeds(vote("alice", "carol"));
-    await assertSucceeds(deleteDoc(doc(db("alice"), "groups", "g1", "days", DATE, "votes", "alice")));
-  });
-  it("rejects self vote, vote without post, vote for missing post", async () => {
-    await seed({}, ["alice", "bob"]);
-    await assertFails(vote("alice", "alice"));
-    await assertFails(vote("carol", "bob"));
-    await assertFails(vote("alice", "carol"));
-  });
-  it("rejects votes from non-members or on a closed day", async () => {
-    await seed({}, ["alice", "bob", "dave"]);
-    await assertFails(vote("dave", "bob"));
-    await seed({ status: "closed" }, ["alice", "bob"]);
-    await assertFails(vote("alice", "bob"));
-  });
-  it("lets members read votes", async () => {
-    await seed();
-    await assertSucceeds(getDocs(collection(db("bob"), "groups", "g1", "days", DATE, "votes")));
-    await assertFails(getDocs(collection(db("dave"), "groups", "g1", "days", DATE, "votes")));
-  });
-});
-
-describe("groups", () => {
-  it("creates a group owned by me", async () => {
-    await assertSucceeds(setDoc(doc(db("alice"), "groups", "g2"), { name: "Le Taf", ownerId: "alice", memberIds: ["alice"] }));
-    await assertFails(setDoc(doc(db("alice"), "groups", "g3"), { name: "Le Taf", ownerId: "alice", memberIds: ["alice", "bob"] }));
-  });
-  it("lists only my groups", async () => {
-    await seed();
-    await assertSucceeds(getDocs(query(collection(db("bob"), "groups"), where("memberIds", "array-contains", "bob"))));
-    await assertFails(getDocs(collection(db("bob"), "groups")));
-  });
-  it("lets anyone read one group by id", async () => {
-    await seed();
-    await assertSucceeds(getDoc(doc(db("dave"), "groups", "g1")));
-  });
-  it("lets a user join once, and not add others", async () => {
-    await seed();
-    await assertSucceeds(updateDoc(doc(db("dave"), "groups", "g1"), { memberIds: arrayUnion("dave") }));
-    await assertFails(updateDoc(doc(db("erin"), "groups", "g1"), { memberIds: arrayUnion("erin", "frank") }));
-    await assertFails(updateDoc(doc(db("erin"), "groups", "g1"), { name: "Pwned", memberIds: arrayUnion("erin") }));
-  });
-  it("caps groups at 30 members", async () => {
-    await env.withSecurityRulesDisabled(async (ctx) => {
-      const members = Array.from({ length: 30 }, (_, i) => `u${i}`);
-      await setDoc(doc(ctx.firestore(), "groups", "full"), { name: "Full", ownerId: "u0", memberIds: members });
-    });
-    await assertFails(updateDoc(doc(db("dave"), "groups", "full"), { memberIds: arrayUnion("dave") }));
-  });
-  it("lets a member leave but not the owner", async () => {
-    await seed();
-    await assertSucceeds(updateDoc(doc(db("bob"), "groups", "g1"), { memberIds: arrayRemove("bob") }));
-    await assertFails(updateDoc(doc(db("alice"), "groups", "g1"), { memberIds: arrayRemove("alice") }));
-  });
-  it("lets the owner rename and remove members, not others", async () => {
-    await seed();
-    await assertSucceeds(updateDoc(doc(db("alice"), "groups", "g1"), { name: "La Coloc 2", memberIds: arrayRemove("carol") }));
-    await assertFails(updateDoc(doc(db("bob"), "groups", "g1"), { name: "Chez Bob" }));
-    await assertFails(updateDoc(doc(db("bob"), "groups", "g1"), { memberIds: arrayRemove("alice") }));
-  });
-});
-
-describe("playlist, users, pushTokens", () => {
-  it("lets members read the playlist, nobody write it", async () => {
-    await seed();
-    await assertSucceeds(getDocs(collection(db("bob"), "groups", "g1", "playlist")));
-    await assertFails(getDocs(collection(db("dave"), "groups", "g1", "playlist")));
-    await assertFails(setDoc(doc(db("alice"), "groups", "g1", "playlist", "x"), { votes: 99 }));
-  });
-  it("lets me write my profile and push token, never read tokens", async () => {
-    await assertSucceeds(setDoc(doc(db("alice"), "users", "alice"), { name: "Alice", createdAt: serverTimestamp() }));
-    await assertFails(setDoc(doc(db("alice"), "users", "bob"), { name: "Bob", createdAt: serverTimestamp() }));
-    await assertSucceeds(getDoc(doc(db("bob"), "users", "alice")));
-    await assertSucceeds(setDoc(doc(db("alice"), "pushTokens", "alice"), { token: "ExponentPushToken[x]", updatedAt: serverTimestamp() }));
-    await assertFails(getDoc(doc(db("bob"), "pushTokens", "alice")));
-  });
-});
-```
-
-- [ ] **Step 2 : Vérifier qu'ils échouent**
-
-Run :
-
-```bash
-export JAVA_HOME=/opt/homebrew/opt/openjdk@21 PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
-cd functions && npm run test:emulator
-```
-
-Expected : FAIL. Soit l'émulateur refuse de démarrer faute de `firestore.rules`, soit le test lève `ENOENT: no such file or directory, open '../firestore.rules'`.
-
-- [ ] **Step 3 : Implémenter les règles**
+- [ ] **Step 3 : Règles de sécurité**
 
 `firestore.rules` :
 
@@ -643,152 +244,69 @@ service cloud.firestore {
 }
 ```
 
-- [ ] **Step 4 : Vérifier que ça passe**
-
-Run : `cd functions && npm run test:emulator` (avec Java 21 exporté)
-Expected : PASS, 21 tests.
-
-- [ ] **Step 5 : Vérifier que les tests mordent**
-
-Retirer temporairement la ligne `&& hasPostedOn(date, uid)` de la règle des votes, puis relancer `npm run test:emulator`.
-Expected : FAIL sur `rejects self vote, vote without post, vote for missing post`.
-Remettre la ligne, relancer : PASS, 21 tests.
-
-- [ ] **Step 6 : Commit**
+- [ ] **Step 4 : Commit de la config**
 
 ```bash
-git add firestore.rules functions/test/emulator/rules.test.ts
-git commit -m "feat(firestore): add security rules with emulator tests"
+git add firebase.json firestore.indexes.json firestore.rules tsconfig.json .gitignore
+git commit -m "feat(firestore): add Firebase config and security rules"
 ```
 
----
+- [ ] **Step 5 : Package `functions`**
 
-### Task 3: Décision du tick et tirage du créneau
+`functions/package.json` :
 
-**Files:**
-- Create: `functions/src/types.ts`
-- Create: `functions/src/schedule.ts`
-- Test: `functions/test/unit/schedule.test.ts`
-
-**Interfaces :**
-- Consomme : `addMinutes` et `parisTimeToDate` (tâche 1).
-- Produit :
-  - `functions/src/types.ts` : `DayStatus`, `Track`, `DayDoc`, `PostDoc`, `GroupDoc`, `VoteDoc`, `PlaylistEntryDoc` (champs ci-dessous) ;
-  - `functions/src/schedule.ts` :
-    - constantes `FIRST_DROP_MINUTE`, `LAST_DROP_MINUTE`, `SLOT_MINUTES`, `REMINDER_DELAY_MINUTES`, `RESULTS_MINUTE` ;
-    - `interface DayState { date; status; dropAt: Date; remindedAt: Date | null; resultsSentAt: Date | null }` ;
-    - `interface TickState { now: Date; todayKey: string; today: DayState | null; yesterday: DayState | null; unclosedPastKeys: string[] }` ;
-    - `type Action = { type: "close" | "create" | "drop" | "remind" | "results"; date: string }` (union discriminée) ;
-    - `pickDropAt(dateKey: string, random: () => number): Date` ;
-    - `decideActions(state: TickState): Action[]`.
-
-- [ ] **Step 1 : Écrire le test qui échoue**
-
-`functions/test/unit/schedule.test.ts` :
-
-```ts
-import { describe, expect, it } from "vitest";
-import { decideActions, pickDropAt, type DayState, type TickState } from "../../src/schedule.js";
-
-const at = (iso: string) => new Date(iso);
-
-function day(overrides: Partial<DayState> = {}): DayState {
-  return {
-    date: "2026-09-14",
-    status: "pending",
-    dropAt: at("2026-09-14T15:00:00+02:00"),
-    remindedAt: null,
-    resultsSentAt: null,
-    ...overrides,
-  };
+```json
+{
+  "name": "angelus-functions",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
 }
-
-function state(overrides: Partial<TickState> = {}): TickState {
-  return {
-    now: at("2026-09-14T12:00:00+02:00"),
-    todayKey: "2026-09-14",
-    today: day(),
-    yesterday: null,
-    unclosedPastKeys: [],
-    ...overrides,
-  };
-}
-
-describe("pickDropAt", () => {
-  it("picks 10:00 for the lowest random value", () => {
-    expect(pickDropAt("2026-09-14", () => 0).toISOString()).toBe("2026-09-14T08:00:00.000Z");
-  });
-  it("picks 19:45 for the highest random value", () => {
-    expect(pickDropAt("2026-09-14", () => 0.999999).toISOString()).toBe("2026-09-14T17:45:00.000Z");
-  });
-  it("lands on a 15-minute slot", () => {
-    expect(pickDropAt("2026-09-14", () => 0.5).toISOString()).toBe("2026-09-14T13:00:00.000Z");
-  });
-});
-
-describe("decideActions", () => {
-  it("creates today when missing", () => {
-    expect(decideActions(state({ today: null }))).toEqual([{ type: "create", date: "2026-09-14" }]);
-  });
-
-  it("does nothing before the drop", () => {
-    expect(decideActions(state({ now: at("2026-09-14T14:45:00+02:00") }))).toEqual([]);
-  });
-
-  it("drops at or after dropAt", () => {
-    expect(decideActions(state({ now: at("2026-09-14T15:00:00+02:00") }))).toEqual([
-      { type: "drop", date: "2026-09-14" },
-    ]);
-    expect(decideActions(state({ now: at("2026-09-14T17:30:00+02:00") }))).toEqual([
-      { type: "drop", date: "2026-09-14" },
-    ]);
-  });
-
-  it("reminds 45 minutes after the drop, once", () => {
-    const live = day({ status: "live" });
-    expect(decideActions(state({ today: live, now: at("2026-09-14T15:30:00+02:00") }))).toEqual([]);
-    expect(decideActions(state({ today: live, now: at("2026-09-14T15:45:00+02:00") }))).toEqual([
-      { type: "remind", date: "2026-09-14" },
-    ]);
-    const reminded = day({ status: "live", remindedAt: at("2026-09-14T15:45:00+02:00") });
-    expect(decideActions(state({ today: reminded, now: at("2026-09-14T16:00:00+02:00") }))).toEqual([]);
-  });
-
-  it("closes every unclosed past day before anything else", () => {
-    expect(
-      decideActions(state({ today: null, unclosedPastKeys: ["2026-09-12", "2026-09-13"] })),
-    ).toEqual([
-      { type: "close", date: "2026-09-12" },
-      { type: "close", date: "2026-09-13" },
-      { type: "create", date: "2026-09-14" },
-    ]);
-  });
-
-  it("sends yesterday's results from 09:00, once", () => {
-    const yesterday = day({ date: "2026-09-13", status: "closed" });
-    expect(decideActions(state({ yesterday, now: at("2026-09-14T08:45:00+02:00") }))).toEqual([]);
-    expect(decideActions(state({ yesterday, now: at("2026-09-14T09:00:00+02:00") }))).toEqual([
-      { type: "results", date: "2026-09-13" },
-    ]);
-    const sent = day({ date: "2026-09-13", status: "closed", resultsSentAt: at("2026-09-14T09:00:00+02:00") });
-    expect(decideActions(state({ yesterday: sent, now: at("2026-09-14T09:15:00+02:00") }))).toEqual([]);
-  });
-
-  it("waits for yesterday to be closed before sending results", () => {
-    const yesterday = day({ date: "2026-09-13", status: "live" });
-    expect(
-      decideActions(state({ yesterday, unclosedPastKeys: ["2026-09-13"], now: at("2026-09-14T09:00:00+02:00") })),
-    ).toEqual([{ type: "close", date: "2026-09-13" }]);
-  });
-});
 ```
 
-- [ ] **Step 2 : Vérifier qu'il échoue**
+`functions/tsconfig.json` :
 
-Run : `cd functions && npx vitest run test/unit/schedule.test.ts`
-Expected : FAIL, l'import `../../src/schedule.js` est introuvable.
+```json
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "lib",
+    "rootDir": "src",
+    "strict": true,
+    "skipLibCheck": true,
+    "sourceMap": true
+  },
+  "include": ["src"]
+}
+```
 
-- [ ] **Step 3 : Implémenter**
+`functions/.gitignore` :
+
+```gitignore
+node_modules/
+lib/
+*.log
+```
+
+Installer (depuis `functions/`) :
+
+```bash
+cd functions
+npm install firebase-functions@7.3.2 firebase-admin@14.4.0 @google/genai@2.22.0 expo-server-sdk@7.2.0
+npm install -D typescript@~6.0.3
+```
+
+Attendu : `package.json` contient les 4 `dependencies` et `typescript` en `devDependencies`, et `package-lock.json` est créé.
+
+- [ ] **Step 6 : Types et helpers de date**
 
 `functions/src/types.ts` :
 
@@ -838,6 +356,66 @@ export interface PlaylistEntryDoc {
   votes: number;
 }
 ```
+
+`functions/src/dates.ts` :
+
+```ts
+const TIME_ZONE = "Europe/Paris";
+
+const dateKeyFormat = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+const partsFormat = new Intl.DateTimeFormat("en-US", {
+  timeZone: TIME_ZONE,
+  hourCycle: "h23",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
+/** Paris calendar date of an instant, as "YYYY-MM-DD". */
+export function parisDateKey(instant: Date): string {
+  return dateKeyFormat.format(instant);
+}
+
+export function previousDateKey(dateKey: string): string {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day - 1)).toISOString().slice(0, 10);
+}
+
+/** Instant at which Paris wall-clock time `minutesOfDay` occurs on `dateKey`. */
+export function parisTimeToDate(dateKey: string, minutesOfDay: number): Date {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const guess = Date.UTC(year, month - 1, day, 0, minutesOfDay);
+  return new Date(guess - parisOffsetMinutes(new Date(guess)) * 60_000);
+}
+
+export function addMinutes(instant: Date, minutes: number): Date {
+  return new Date(instant.getTime() + minutes * 60_000);
+}
+
+function parisOffsetMinutes(instant: Date): number {
+  const parts = Object.fromEntries(partsFormat.formatToParts(instant).map((p) => [p.type, p.value]));
+  const wallClockAsUtc = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+    Number(parts.hour),
+    Number(parts.minute),
+    Number(parts.second),
+  );
+  return (wallClockAsUtc - instant.getTime()) / 60_000;
+}
+```
+
+- [ ] **Step 7 : Décision du tick et tirage du créneau**
 
 `functions/src/schedule.ts` :
 
@@ -912,85 +490,7 @@ function isAtOrAfter(instant: Date, reference: Date): boolean {
 }
 ```
 
-- [ ] **Step 4 : Vérifier que ça passe**
-
-Run : `cd functions && npx vitest run test/unit/schedule.test.ts`
-Expected : PASS, 10 tests.
-
-- [ ] **Step 5 : Commit**
-
-```bash
-git add functions/src/types.ts functions/src/schedule.ts functions/test/unit/schedule.test.ts
-git commit -m "feat(functions): decide tick actions and pick drop slot"
-```
-
----
-
-### Task 4: Calcul des gagnants
-
-**Files:**
-- Create: `functions/src/winners.ts`
-- Test: `functions/test/unit/winners.test.ts`
-
-**Interfaces :**
-- Consomme : rien.
-- Produit :
-  - `interface VoteInput { voterUid: string; postUid: string }` ;
-  - `interface Winner { postUid: string; votes: number }` ;
-  - `computeWinners(votes: VoteInput[], eligibleUids: ReadonlySet<string>): Winner[]`. `eligibleUids` = membres du groupe ayant posté ce jour-là. Les ex æquo gagnent tous (triés par uid), et sans vote il n'y a pas de gagnant.
-
-- [ ] **Step 1 : Écrire le test qui échoue**
-
-`functions/test/unit/winners.test.ts` :
-
-```ts
-import { describe, expect, it } from "vitest";
-import { computeWinners } from "../../src/winners.js";
-
-const eligible = new Set(["alice", "bob", "carol", "dave"]);
-
-describe("computeWinners", () => {
-  it("returns the most voted post", () => {
-    const votes = [
-      { voterUid: "alice", postUid: "bob" },
-      { voterUid: "carol", postUid: "bob" },
-      { voterUid: "bob", postUid: "alice" },
-    ];
-    expect(computeWinners(votes, eligible)).toEqual([{ postUid: "bob", votes: 2 }]);
-  });
-
-  it("returns every tied post, sorted by uid", () => {
-    const votes = [
-      { voterUid: "alice", postUid: "carol" },
-      { voterUid: "carol", postUid: "alice" },
-    ];
-    expect(computeWinners(votes, eligible)).toEqual([
-      { postUid: "alice", votes: 1 },
-      { postUid: "carol", votes: 1 },
-    ]);
-  });
-
-  it("returns no winner without votes", () => {
-    expect(computeWinners([], eligible)).toEqual([]);
-  });
-
-  it("ignores self votes and votes involving non-eligible users", () => {
-    const votes = [
-      { voterUid: "alice", postUid: "alice" },
-      { voterUid: "erin", postUid: "bob" },
-      { voterUid: "alice", postUid: "erin" },
-    ];
-    expect(computeWinners(votes, eligible)).toEqual([]);
-  });
-});
-```
-
-- [ ] **Step 2 : Vérifier qu'il échoue**
-
-Run : `cd functions && npx vitest run test/unit/winners.test.ts`
-Expected : FAIL, l'import `../../src/winners.js` est introuvable.
-
-- [ ] **Step 3 : Implémenter**
+- [ ] **Step 8 : Gagnants et textes des notifications**
 
 `functions/src/winners.ts` :
 
@@ -1024,83 +524,6 @@ export function computeWinners(votes: VoteInput[], eligibleUids: ReadonlySet<str
 }
 ```
 
-- [ ] **Step 4 : Vérifier que ça passe**
-
-Run : `cd functions && npx vitest run test/unit/winners.test.ts`
-Expected : PASS, 4 tests.
-
-- [ ] **Step 5 : Commit**
-
-```bash
-git add functions/src/winners.ts functions/test/unit/winners.test.ts
-git commit -m "feat(functions): compute daily winners with ties"
-```
-
----
-
-### Task 5: Textes des notifications
-
-**Files:**
-- Create: `functions/src/messages.ts`
-- Test: `functions/test/unit/messages.test.ts`
-
-**Interfaces :**
-- Consomme : rien.
-- Produit :
-  - `interface PushPayload { title: string; body: string }` ;
-  - `dropMessage(theme: string): PushPayload` ;
-  - `reminderMessage(): PushPayload` ;
-  - `resultsMessage(groupName: string, winners: { name: string; title: string }[]): PushPayload`.
-
-- [ ] **Step 1 : Écrire le test qui échoue**
-
-`functions/test/unit/messages.test.ts` :
-
-```ts
-import { describe, expect, it } from "vitest";
-import { dropMessage, reminderMessage, resultsMessage } from "../../src/messages.js";
-
-describe("messages", () => {
-  it("announces the drop with the theme", () => {
-    expect(dropMessage("Le son que ton chat écoute en cachette")).toEqual({
-      title: "Angelus",
-      body: "C'est l'heure. Le son que ton chat écoute en cachette. Tu as 1 h pour poster.",
-    });
-  });
-
-  it("keeps a theme's own final punctuation", () => {
-    expect(dropMessage("Qui a volé le goûter ?").body).toBe("C'est l'heure. Qui a volé le goûter ? Tu as 1 h pour poster.");
-  });
-
-  it("reminds", () => {
-    expect(reminderMessage().body).toBe("Plus que 15 min pour poster à l'heure.");
-  });
-
-  it("announces a single winner", () => {
-    expect(resultsMessage("La Coloc", [{ name: "Inès", title: "Everybody Wants to Be a Cat" }])).toEqual({
-      title: "La Coloc",
-      body: "Inès gagne La Coloc avec Everybody Wants to Be a Cat.",
-    });
-  });
-
-  it("announces tied winners", () => {
-    const winners = [
-      { name: "Inès", title: "A" },
-      { name: "Tom", title: "B" },
-      { name: "Léa", title: "C" },
-    ];
-    expect(resultsMessage("La Coloc", winners).body).toBe("Inès, Tom et Léa gagnent La Coloc ex æquo.");
-  });
-});
-```
-
-- [ ] **Step 2 : Vérifier qu'il échoue**
-
-Run : `cd functions && npx vitest run test/unit/messages.test.ts`
-Expected : FAIL, l'import `../../src/messages.js` est introuvable.
-
-- [ ] **Step 3 : Implémenter**
-
 `functions/src/messages.ts` :
 
 ```ts
@@ -1132,90 +555,7 @@ function asSentence(text: string): string {
 }
 ```
 
-- [ ] **Step 4 : Vérifier que ça passe**
-
-Run : `cd functions && npx vitest run test/unit/messages.test.ts`
-Expected : PASS, 5 tests.
-
-- [ ] **Step 5 : Commit**
-
-```bash
-git add functions/src/messages.ts functions/test/unit/messages.test.ts
-git commit -m "feat(functions): add French push notification copy"
-```
-
----
-
-### Task 6: Génération du thème (Gemini et secours)
-
-**Files:**
-- Create: `functions/src/theme.ts`
-- Test: `functions/test/unit/theme.test.ts`
-
-**Interfaces :**
-- Consomme : rien.
-- Produit :
-  - `GEMINI_MODEL` (`"gemini-3.8-flash"`) et `FALLBACK_THEMES: string[]` ;
-  - `buildThemePrompt(recentThemes: string[]): string` ;
-  - `parseThemeResponse(text: string | undefined): string | null` ;
-  - `pickFallbackTheme(recentThemes: string[], random: () => number): string` ;
-  - `generateTheme(apiKey: string, recentThemes: string[]): Promise<string | null>`, qui ne lève jamais d'erreur : `null` en cas d'échec.
-
-- [ ] **Step 1 : Écrire le test qui échoue**
-
-`functions/test/unit/theme.test.ts` :
-
-```ts
-import { describe, expect, it } from "vitest";
-import { buildThemePrompt, FALLBACK_THEMES, parseThemeResponse, pickFallbackTheme } from "../../src/theme.js";
-
-describe("parseThemeResponse", () => {
-  it("extracts and trims the theme", () => {
-    expect(parseThemeResponse('{"theme": "  La berceuse d\'un dragon insomniaque. "}')).toBe(
-      "La berceuse d'un dragon insomniaque",
-    );
-  });
-
-  it("rejects empty, malformed, or out-of-range answers", () => {
-    expect(parseThemeResponse(undefined)).toBeNull();
-    expect(parseThemeResponse("pas du json")).toBeNull();
-    expect(parseThemeResponse('{"titre": "x"}')).toBeNull();
-    expect(parseThemeResponse('{"theme": 42}')).toBeNull();
-    expect(parseThemeResponse('{"theme": "ok"}')).toBeNull();
-    expect(parseThemeResponse(JSON.stringify({ theme: "a".repeat(121) }))).toBeNull();
-  });
-});
-
-describe("pickFallbackTheme", () => {
-  it("avoids recent themes", () => {
-    const recent = FALLBACK_THEMES.slice(1);
-    expect(pickFallbackTheme(recent, () => 0.7)).toBe(FALLBACK_THEMES[0]);
-  });
-
-  it("reuses the full list when every theme is recent", () => {
-    expect(pickFallbackTheme(FALLBACK_THEMES, () => 0)).toBe(FALLBACK_THEMES[0]);
-  });
-});
-
-describe("buildThemePrompt", () => {
-  it("lists recent themes to avoid", () => {
-    const prompt = buildThemePrompt(["Le tube préféré de ta machine à laver"]);
-    expect(prompt).toContain("- Le tube préféré de ta machine à laver");
-    expect(prompt).toContain('{"theme": "..."}');
-  });
-
-  it("omits the recent section when there is no history", () => {
-    expect(buildThemePrompt([])).not.toContain("thèmes récents");
-  });
-});
-```
-
-- [ ] **Step 2 : Vérifier qu'il échoue**
-
-Run : `cd functions && npx vitest run test/unit/theme.test.ts`
-Expected : FAIL, l'import `../../src/theme.js` est introuvable.
-
-- [ ] **Step 3 : Implémenter**
+- [ ] **Step 9 : Thème (Gemini et secours) et push Expo**
 
 `functions/src/theme.ts` :
 
@@ -1315,98 +655,6 @@ export async function generateTheme(apiKey: string, recentThemes: string[]): Pro
 }
 ```
 
-- [ ] **Step 4 : Vérifier que ça passe**
-
-Run : `cd functions && npx vitest run test/unit/theme.test.ts`
-Expected : PASS, 6 tests.
-
-- [ ] **Step 5 : Commit**
-
-```bash
-git add functions/src/theme.ts functions/test/unit/theme.test.ts
-git commit -m "feat(functions): generate daily theme with Gemini and fallback list"
-```
-
----
-
-### Task 7: Envoi des push Expo
-
-**Files:**
-- Create: `functions/src/push.ts`
-- Test: `functions/test/unit/push.test.ts`
-
-**Interfaces :**
-- Consomme : `PushPayload` (tâche 5).
-- Produit :
-  - `interface PushTarget { uid: string; token: string }` ;
-  - `type SendPush = (targets: PushTarget[], payload: PushPayload) => Promise<string[]>` : résout avec les uids dont le token est mort ;
-  - `interface ExpoClient { chunkPushNotifications; sendPushNotificationsAsync }` ;
-  - `createExpoSender(expo?: ExpoClient): SendPush`.
-
-- [ ] **Step 1 : Écrire le test qui échoue**
-
-`functions/test/unit/push.test.ts` :
-
-```ts
-import type { ExpoPushMessage, ExpoPushTicket } from "expo-server-sdk";
-import { describe, expect, it } from "vitest";
-import { createExpoSender, type ExpoClient } from "../../src/push.js";
-
-function fakeExpo(ticketFor: (message: ExpoPushMessage) => ExpoPushTicket) {
-  const sent: ExpoPushMessage[] = [];
-  const client: ExpoClient = {
-    chunkPushNotifications: (messages) => [messages.slice(0, 1), messages.slice(1)].filter((c) => c.length > 0),
-    sendPushNotificationsAsync: async (messages) => {
-      sent.push(...messages);
-      return messages.map(ticketFor);
-    },
-  };
-  return { client, sent };
-}
-
-describe("createExpoSender", () => {
-  it("sends the payload to every valid token", async () => {
-    const { client, sent } = fakeExpo(() => ({ status: "ok", id: "t" }));
-    const dead = await createExpoSender(client)(
-      [
-        { uid: "alice", token: "ExponentPushToken[aaa]" },
-        { uid: "bob", token: "ExponentPushToken[bbb]" },
-      ],
-      { title: "Angelus", body: "Hello" },
-    );
-    expect(dead).toEqual([]);
-    expect(sent).toEqual([
-      { to: "ExponentPushToken[aaa]", sound: "default", title: "Angelus", body: "Hello" },
-      { to: "ExponentPushToken[bbb]", sound: "default", title: "Angelus", body: "Hello" },
-    ]);
-  });
-
-  it("reports malformed and unregistered tokens as dead, across chunks", async () => {
-    const { client } = fakeExpo((message) =>
-      message.to === "ExponentPushToken[bbb]"
-        ? { status: "error", message: "gone", details: { error: "DeviceNotRegistered" } }
-        : { status: "ok", id: "t" },
-    );
-    const dead = await createExpoSender(client)(
-      [
-        { uid: "alice", token: "ExponentPushToken[aaa]" },
-        { uid: "carol", token: "not-a-token" },
-        { uid: "bob", token: "ExponentPushToken[bbb]" },
-      ],
-      { title: "Angelus", body: "Hello" },
-    );
-    expect(dead.sort()).toEqual(["bob", "carol"]);
-  });
-});
-```
-
-- [ ] **Step 2 : Vérifier qu'il échoue**
-
-Run : `cd functions && npx vitest run test/unit/push.test.ts`
-Expected : FAIL, l'import `../../src/push.js` est introuvable.
-
-- [ ] **Step 3 : Implémenter**
-
 `functions/src/push.ts` :
 
 ```ts
@@ -1452,176 +700,7 @@ export function createExpoSender(expo: ExpoClient = new Expo()): SendPush {
 }
 ```
 
-- [ ] **Step 4 : Vérifier que ça passe**
-
-Run : `cd functions && npm test`
-Expected : PASS, 6 fichiers et 33 tests (toute la suite unitaire).
-
-- [ ] **Step 5 : Commit**
-
-```bash
-git add functions/src/push.ts functions/test/unit/push.test.ts
-git commit -m "feat(functions): send Expo push and report dead tokens"
-```
-
----
-
-### Task 8: Orchestration `tick` et fonction planifiée
-
-**Files:**
-- Create: `functions/src/tick.ts`
-- Create: `functions/src/index.ts`
-- Test: `functions/test/emulator/tick.test.ts`
-
-**Interfaces :**
-- Consomme :
-  - tâche 1 : `parisDateKey`, `previousDateKey` ;
-  - tâche 3 : `decideActions`, `pickDropAt`, `Action`, `DayState`, et les types ;
-  - tâche 4 : `computeWinners` ;
-  - tâche 5 : `dropMessage`, `reminderMessage`, `resultsMessage`, `PushPayload` ;
-  - tâche 6 : `pickFallbackTheme`, `generateTheme` ;
-  - tâche 7 : `PushTarget`, `SendPush`, `createExpoSender`.
-- Produit :
-  - `interface TickDeps { db: Firestore; now: Date; random: () => number; generateTheme: (recentThemes: string[]) => Promise<string | null>; sendPush: SendPush }` ;
-  - `runTick(deps: TickDeps): Promise<Action[]>` ;
-  - export Cloud Function `tick` (`functions/src/index.ts`).
-
-- [ ] **Step 1 : Écrire le test qui échoue**
-
-`functions/test/emulator/tick.test.ts` :
-
-```ts
-import { getApps, initializeApp } from "firebase-admin/app";
-import { getFirestore, Timestamp } from "firebase-admin/firestore";
-import { beforeEach, describe, expect, it } from "vitest";
-import type { PushPayload } from "../../src/messages.js";
-import type { PushTarget } from "../../src/push.js";
-import { FALLBACK_THEMES } from "../../src/theme.js";
-import { runTick, type TickDeps } from "../../src/tick.js";
-
-const PROJECT_ID = "demo-angelus";
-const db = getFirestore(getApps()[0] ?? initializeApp({ projectId: PROJECT_ID }));
-const TRACK = { deezerId: 3135553, title: "The Lovecats", artist: "The Cure", cover: "https://cdn/x.jpg" };
-
-interface Sent {
-  uids: string[];
-  payload: PushPayload;
-}
-
-function harness(options: { theme?: string | null; deadUids?: string[] } = {}) {
-  const sent: Sent[] = [];
-  const deps = (nowIso: string): TickDeps => ({
-    db,
-    now: new Date(nowIso),
-    random: () => 0.5,
-    generateTheme: async () => (options.theme === undefined ? "Le son que ton chat écoute en cachette" : options.theme),
-    sendPush: async (targets: PushTarget[], payload: PushPayload) => {
-      sent.push({ uids: targets.map((t) => t.uid).sort(), payload });
-      return options.deadUids ?? [];
-    },
-  });
-  return { sent, tick: (nowIso: string) => runTick(deps(nowIso)) };
-}
-
-async function seedFriends() {
-  for (const [uid, name] of [["alice", "Alice"], ["bob", "Bob"], ["carol", "Carol"]]) {
-    await db.doc(`users/${uid}`).set({ name, createdAt: Timestamp.now() });
-    await db.doc(`pushTokens/${uid}`).set({ token: `ExponentPushToken[${uid}]`, updatedAt: Timestamp.now() });
-  }
-  await db.doc("groups/g1").set({ name: "La Coloc", ownerId: "alice", memberIds: ["alice", "bob", "carol"] });
-}
-
-beforeEach(async () => {
-  const host = process.env.FIRESTORE_EMULATOR_HOST;
-  await fetch(`http://${host}/emulator/v1/projects/${PROJECT_ID}/databases/(default)/documents`, { method: "DELETE" });
-});
-
-describe("runTick", () => {
-  it("runs a whole day: create, drop, remind, close, results", async () => {
-    await seedFriends();
-    const { sent, tick } = harness();
-
-    expect(await tick("2026-09-14T00:05:00+02:00")).toEqual([{ type: "create", date: "2026-09-14" }]);
-    const created = (await db.doc("days/2026-09-14").get()).data()!;
-    expect(created.status).toBe("pending");
-    expect(created.theme).toBe("Le son que ton chat écoute en cachette");
-    expect(created.dropAt.toDate().toISOString()).toBe("2026-09-14T13:00:00.000Z");
-
-    expect(await tick("2026-09-14T14:45:00+02:00")).toEqual([]);
-
-    expect(await tick("2026-09-14T15:00:00+02:00")).toEqual([{ type: "drop", date: "2026-09-14" }]);
-    expect((await db.doc("days/2026-09-14").get()).get("status")).toBe("live");
-    expect(sent[0]).toEqual({
-      uids: ["alice", "bob", "carol"],
-      payload: { title: "Angelus", body: "C'est l'heure. Le son que ton chat écoute en cachette. Tu as 1 h pour poster." },
-    });
-
-    await db.doc("days/2026-09-14/posts/alice").set({ track: { ...TRACK, title: "Stray Cat Strut" }, postedAt: Timestamp.now(), late: false });
-    await db.doc("days/2026-09-14/posts/bob").set({ track: TRACK, postedAt: Timestamp.now(), late: false });
-    await db.doc("groups/g1/days/2026-09-14/votes/alice").set({ postUid: "bob", updatedAt: Timestamp.now() });
-
-    expect(await tick("2026-09-14T15:45:00+02:00")).toEqual([{ type: "remind", date: "2026-09-14" }]);
-    expect(sent[1]).toEqual({ uids: ["carol"], payload: { title: "Angelus", body: "Plus que 15 min pour poster à l'heure." } });
-    expect(await tick("2026-09-14T16:00:00+02:00")).toEqual([]);
-
-    expect(await tick("2026-09-15T00:00:00+02:00")).toEqual([
-      { type: "close", date: "2026-09-14" },
-      { type: "create", date: "2026-09-15" },
-    ]);
-    expect((await db.doc("days/2026-09-14").get()).get("status")).toBe("closed");
-    expect((await db.doc("groups/g1/playlist/2026-09-14_bob").get()).data()).toEqual({
-      date: "2026-09-14",
-      theme: "Le son que ton chat écoute en cachette",
-      winnerUid: "bob",
-      winnerName: "Bob",
-      track: TRACK,
-      votes: 1,
-    });
-
-    expect(await tick("2026-09-15T08:45:00+02:00")).toEqual([]);
-    expect(await tick("2026-09-15T09:00:00+02:00")).toEqual([{ type: "results", date: "2026-09-14" }]);
-    expect(sent[2]).toEqual({
-      uids: ["alice", "bob", "carol"],
-      payload: { title: "La Coloc", body: "Bob gagne La Coloc avec The Lovecats." },
-    });
-    expect(await tick("2026-09-15T09:15:00+02:00")).toEqual([]);
-  });
-
-  it("falls back to a canned theme when Gemini returns nothing", async () => {
-    const { tick } = harness({ theme: null });
-    await tick("2026-09-14T00:05:00+02:00");
-    expect(FALLBACK_THEMES).toContain((await db.doc("days/2026-09-14").get()).get("theme"));
-  });
-
-  it("deletes push tokens reported dead", async () => {
-    await seedFriends();
-    const { tick } = harness({ deadUids: ["carol"] });
-    await tick("2026-09-14T00:05:00+02:00");
-    await tick("2026-09-14T15:00:00+02:00");
-    expect((await db.doc("pushTokens/carol").get()).exists).toBe(false);
-    expect((await db.doc("pushTokens/alice").get()).exists).toBe(true);
-  });
-
-  it("closes a day that never dropped, without winners", async () => {
-    await seedFriends();
-    await db.doc("days/2026-09-13").set({ theme: "x", dropAt: Timestamp.fromDate(new Date("2026-09-13T17:00:00Z")), status: "pending" });
-    const { tick } = harness();
-    expect(await tick("2026-09-14T00:05:00+02:00")).toEqual([
-      { type: "close", date: "2026-09-13" },
-      { type: "create", date: "2026-09-14" },
-    ]);
-    expect((await db.doc("days/2026-09-13").get()).get("status")).toBe("closed");
-    expect((await db.collection("groups/g1/playlist").get()).empty).toBe(true);
-  });
-});
-```
-
-- [ ] **Step 2 : Vérifier qu'il échoue**
-
-Run : `cd functions && npm run test:emulator` (avec Java 21 exporté)
-Expected : FAIL sur `tick.test.ts`, l'import `../../src/tick.js` est introuvable. Les 21 tests de règles passent toujours.
-
-- [ ] **Step 3 : Implémenter l'orchestration**
+- [ ] **Step 10 : Orchestration et fonction planifiée**
 
 `functions/src/tick.ts` :
 
@@ -1796,8 +875,6 @@ async function userName(db: Firestore, uid: string): Promise<string> {
 
 Note : les thèmes récents sont triés par `dropAt` décroissant. Trier par id de document en ordre décroissant échoue (« Firestore does not support descending key scans »).
 
-- [ ] **Step 4 : Déclarer la fonction planifiée**
-
 `functions/src/index.ts` :
 
 ```ts
@@ -1834,34 +911,28 @@ export const tick = onSchedule(
 );
 ```
 
-- [ ] **Step 5 : Vérifier que tout passe**
+- [ ] **Step 11 : Vérifier la compilation et le chargement**
 
 Run :
 
 ```bash
 cd functions
 npm run build
-npm test
-npm run test:emulator
 node -e "import('./lib/index.js').then((m) => console.log(Object.keys(m)))"
 ```
 
-Expected :
-- `tsc` sans erreur ;
-- unitaires : PASS, 33 tests ;
-- émulateur : PASS, 2 fichiers et 25 tests ;
-- la dernière commande affiche `[ 'tick' ]`.
+Expected : `tsc` sans erreur, puis la seconde commande affiche `[ 'tick' ]`.
 
-- [ ] **Step 6 : Commit**
+- [ ] **Step 12 : Commit du code**
 
 ```bash
-git add functions/src/tick.ts functions/src/index.ts functions/test/emulator/tick.test.ts
-git commit -m "feat(functions): orchestrate daily tick as scheduled function"
+git add functions/package.json functions/package-lock.json functions/tsconfig.json functions/.gitignore functions/src
+git commit -m "feat(functions): add scheduled daily tick"
 ```
 
 ---
 
-### Task 9: Déploiement sur Firebase
+### Task 2: Déploiement sur Firebase
 
 Tâche **avec l'utilisateur** : les étapes 1 et 3 se font dans des consoles web, et le déploiement publie vers l'extérieur. Demander confirmation avant `firebase deploy`.
 
@@ -1897,7 +968,7 @@ cd functions && npm run build
 GEMINI_API_KEY=<CLE> node -e "import('./lib/theme.js').then(async (m) => console.log(await m.generateTheme(process.env.GEMINI_API_KEY, [])))"
 ```
 
-Expected : un thème absurde en français s'affiche, pas `null`. Si `null` s'affiche, lire l'avertissement logué : clé invalide ou modèle `gemini-3.8-flash` indisponible. Dans ce dernier cas, remplacer `GEMINI_MODEL` par un modèle Flash listé sur https://ai.google.dev/gemini-api/docs/models, puis relancer `npm test`.
+Expected : un thème absurde en français s'affiche, pas `null`. Si `null` s'affiche, lire l'avertissement logué : clé invalide ou modèle `gemini-3.8-flash` indisponible. Dans ce dernier cas, remplacer `GEMINI_MODEL` par un modèle Flash listé sur https://ai.google.dev/gemini-api/docs/models, puis relancer `npm run build` et l'étape 3.
 
 3. Stocker la clé comme secret :
 
