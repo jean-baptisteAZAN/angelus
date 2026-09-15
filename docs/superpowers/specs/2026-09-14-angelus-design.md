@@ -97,10 +97,12 @@ groups/{gid}/days/{date}/votes/{uid} { postUid, updatedAt }
 days/{date}                          { theme, dropAt, status: 'pending'|'live'|'closed',
                                        remindedAt?, resultsSentAt? }
 days/{date}/posts/{uid}              { track, postedAt, late }
+days/{date}/presence/{uid}           { postedAt, late }
 ```
 
 `track` = `{ deezerId: number, title, artist, cover }`. On ne stocke pas l'URL de l'extrait : elle expire, donc l'app la redemande à Deezer (`GET https://api.deezer.com/track/{deezerId}`) au moment de la lecture.
 
+- **Présence** : `presence/{uid}` est écrit dans le même batch que le post. Il dit qui a posté, et quand, sans révéler le son. C'est ce qui permet d'afficher « Inès, Tom et Léa ont posté » à quelqu'un qui n'a pas encore posté.
 - **Compteurs de votes** : aucun compteur n'est stocké. L'app écoute les votes du groupe (≤ 30 documents) et compte elle-même.
 - **Groupes d'un user** : requête `groups where memberIds array-contains uid`.
 - **Posts d'un groupe** : requête sur `days/{date}/posts` filtrée sur les `memberIds` du groupe. Le filtre `in` de Firestore accepte jusqu'à 30 valeurs, ce qui couvre la taille max d'un groupe.
@@ -115,6 +117,7 @@ days/{date}/posts/{uid}              { track, postedAt, late }
 | `groups/{gid}/playlist/*` | membres | serveur uniquement |
 | `groups/{gid}/days/{date}/votes/{uid}` | membres | `uid == auth.uid`, et en plus : votant membre du groupe, son post existe, `postUid` différent de lui, post cible existant, auteur de ce post membre du groupe, journée `live`. Suppression de son propre vote autorisée |
 | `days/{date}` | si `status != 'pending'` | serveur uniquement |
+| `days/{date}/presence/{uid}` | tout user connecté | **create** seulement : `uid == auth.uid`, journée `live`, `postedAt == request.time`, et le post du même user existe après le batch avec le même `late`. Pas d'update ni de delete |
 | `days/{date}/posts/{uid}` | si le post du lecteur existe pour ce jour | **create** seulement : `uid == auth.uid`, journée `live`, `postedAt == request.time`, `late == request.time > dropAt + 1h`, champs de `track` bien typés. Pas d'update ni de delete |
 
 Raccourcis assumés :
