@@ -1,0 +1,125 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isMe(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function validName(name) {
+      return name is string && name.size() > 0 && name.size() <= 30;
+    }
+
+    function dayData(date) {
+      return get(/databases/$(database)/documents/days/$(date)).data;
+    }
+
+    function hasPostedOn(date, uid) {
+      return exists(/databases/$(database)/documents/days/$(date)/posts/$(uid));
+    }
+
+    function validTrack(t) {
+      return t is map
+        && t.keys().hasOnly(['deezerId', 'title', 'artist', 'cover'])
+        && t.keys().hasAll(['deezerId', 'title', 'artist', 'cover'])
+        && t.deezerId is int
+        && t.title is string && t.title.size() <= 200
+        && t.artist is string && t.artist.size() <= 200
+        && t.cover is string && t.cover.size() <= 500;
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow create, update: if isMe(uid)
+        && request.resource.data.keys().hasOnly(['name', 'createdAt'])
+        && validName(request.resource.data.name);
+      allow delete: if isMe(uid);
+    }
+
+    match /pushTokens/{uid} {
+      allow read: if false;
+      allow write: if isMe(uid);
+    }
+
+    match /groups/{gid} {
+      function ownerUpdate() {
+        return resource.data.ownerId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'memberIds'])
+          && validName(request.resource.data.name)
+          && request.auth.uid in request.resource.data.memberIds
+          && resource.data.memberIds.toSet().hasAll(request.resource.data.memberIds.toSet());
+      }
+
+      function joinSelf() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])
+          && !(request.auth.uid in resource.data.memberIds)
+          && request.resource.data.memberIds.size() == resource.data.memberIds.size() + 1
+          && request.resource.data.memberIds.toSet() == resource.data.memberIds.toSet().union([request.auth.uid].toSet())
+          && request.resource.data.memberIds.size() <= 30;
+      }
+
+      function leaveSelf() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])
+          && request.auth.uid in resource.data.memberIds
+          && request.auth.uid != resource.data.ownerId
+          && request.resource.data.memberIds.size() == resource.data.memberIds.size() - 1
+          && request.resource.data.memberIds.toSet() == resource.data.memberIds.toSet().difference([request.auth.uid].toSet());
+      }
+
+      allow get: if signedIn();
+      allow list: if signedIn() && request.auth.uid in resource.data.memberIds;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['name', 'ownerId', 'memberIds'])
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.memberIds == [request.auth.uid]
+        && validName(request.resource.data.name);
+      allow update: if signedIn() && (ownerUpdate() || joinSelf() || leaveSelf());
+      allow delete: if signedIn() && resource.data.ownerId == request.auth.uid;
+
+      function groupData() {
+        return get(/databases/$(database)/documents/groups/$(gid)).data;
+      }
+
+      match /playlist/{entryId} {
+        allow read: if signedIn() && request.auth.uid in groupData().memberIds;
+        allow write: if false;
+      }
+
+      match /days/{date}/votes/{uid} {
+        allow read: if signedIn() && request.auth.uid in groupData().memberIds;
+        allow create, update: if isMe(uid)
+          && request.resource.data.keys().hasOnly(['postUid', 'updatedAt'])
+          && request.resource.data.updatedAt == request.time
+          && request.resource.data.postUid is string
+          && request.resource.data.postUid != uid
+          && uid in groupData().memberIds
+          && request.resource.data.postUid in groupData().memberIds
+          && dayData(date).status == 'live'
+          && hasPostedOn(date, uid)
+          && hasPostedOn(date, request.resource.data.postUid);
+        allow delete: if isMe(uid) && dayData(date).status == 'live';
+      }
+    }
+
+    match /days/{date} {
+      allow read: if signedIn() && resource.data.status != 'pending';
+      allow write: if false;
+
+      match /posts/{uid} {
+        allow read: if signedIn() && hasPostedOn(date, request.auth.uid);
+        allow create: if isMe(uid)
+          && dayData(date).status == 'live'
+          && request.resource.data.keys().hasOnly(['track', 'postedAt', 'late'])
+          && request.resource.data.postedAt == request.time
+          && request.resource.data.late == (request.time > dayData(date).dropAt + duration.value(1, 'h'))
+          && validTrack(request.resource.data.track);
+        allow update, delete: if false;
+      }
+    }
+  }
+}
