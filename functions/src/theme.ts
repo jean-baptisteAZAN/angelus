@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import * as logger from "firebase-functions/logger";
 
-export const GEMINI_MODEL = "gemini-3.8-flash";
+export const GEMINI_MODEL = "gemini-3.5-flash";
 
 export const FALLBACK_THEMES = [
   "Le son que ton chat écoute en cachette",
