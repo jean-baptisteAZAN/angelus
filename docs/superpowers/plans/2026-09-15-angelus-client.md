@@ -2813,7 +2813,7 @@ Expected : `tsc` sans erreur, et `expo export` affiche `Exported: /tmp/angelus-e
 
 - [ ] **Step 6 : Lancer sur simulateur et vérifier l'écran de connexion**
 
-Build Release (bundle JS embarqué, pas besoin de Metro). Le `-derivedDataPath` local est nécessaire : dans le sandbox de l'agent, le DerivedData par défaut (`~/Library/Developer/Xcode/DerivedData`) échoue avec « unable to attach DB … database is locked ».
+Build Release (bundle JS embarqué, pas besoin de Metro). Le `-derivedDataPath` local évite « unable to attach DB … database is locked », qui survient quand un autre build Xcode (par exemple un `expo run:ios` resté en arrière-plan) tient le DerivedData par défaut.
 
 ```bash
 npx expo prebuild --platform ios --no-install && (cd ios && pod install)
