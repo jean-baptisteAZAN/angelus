@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Statut : implémenté le 2026-09-16**, directement sur `main` (commits `45d3c16`, `af50d72`, `f9c2c16`), puis corrigé après relecture (`a9b9074`). Le code de ce plan est celui d'avant relecture : **le repo fait foi**. Restent à faire : la tâche 5 (déploiement de la règle `presence`, fournisseur Apple dans Firebase, `eas init`, build et TestFlight), bloquée par le renouvellement de l'abonnement Apple Developer.
+
 **Goal :** construire l'app iOS Angelus avec la DA Radio pirate, branchée sur le backend déjà en production (`angelus-sons`), puis la distribuer via TestFlight. Au programme :
 - connexion Apple et pseudo ;
 - groupes et QR code ;

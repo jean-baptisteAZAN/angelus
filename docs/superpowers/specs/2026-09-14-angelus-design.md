@@ -210,7 +210,7 @@ firebase.json
 ## 9. Gestion d'erreurs
 
 - **Deezer indisponible** : message « Recherche indisponible, réessaie » avec un bouton pour relancer. Si l'extrait ne charge pas, lien « Ouvrir dans Deezer ».
-- **Hors ligne** : le cache Firestore sert la lecture. Poster ou voter hors ligne affiche une erreur explicite.
+- **Hors ligne** : le SDK JS Firebase n'a qu'un cache mémoire sur React Native (le cache persistant repose sur IndexedDB, absent en natif). Les écrans déjà chargés restent affichés tant que l'app tourne ; au démarrage sans réseau, ils sont vides. Poster ou voter hors ligne affiche une erreur explicite.
 - **Notifications refusées** : bandeau dans l'onglet Groupe avec un lien vers les réglages.
 - **Écriture refusée par les règles** (par exemple poster après minuit) : message clair (« La journée est terminée »).
 - **Gemini en échec** : thème de secours (voir §2).
