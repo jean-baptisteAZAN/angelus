@@ -10,7 +10,6 @@ export const colors = {
 
 export const fonts = {
   display: "BigShouldersDisplay_900Black",
-  displayBold: "BigShouldersDisplay_800ExtraBold",
   type: "CourierPrime_400Regular",
   typeBold: "CourierPrime_700Bold",
 };

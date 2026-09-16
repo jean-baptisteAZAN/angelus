@@ -1,10 +1,10 @@
-import { BigShouldersDisplay_800ExtraBold, BigShouldersDisplay_900Black } from "@expo-google-fonts/big-shoulders-display";
+import { BigShouldersDisplay_900Black } from "@expo-google-fonts/big-shoulders-display";
 import { CourierPrime_400Regular, CourierPrime_700Bold } from "@expo-google-fonts/courier-prime";
 import { useFonts } from "expo-font";
 import * as Notifications from "expo-notifications";
 import { router, Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { View } from "react-native";
 import { GroupsProvider } from "@/hooks/useGroups";
 import { SessionProvider, useSession } from "@/hooks/useSession";
@@ -13,18 +13,23 @@ import { PlayerProvider } from "@/lib/player";
 import { colors } from "@/ui/theme";
 
 function RootNavigator() {
-  const { loading, user, profile } = useSession();
+  const { loading, user, profile, deleting } = useSession();
   const lastResponse = Notifications.useLastNotificationResponse();
+  const handledResponse = useRef<string | null>(null);
 
   useEffect(() => {
     if (user && profile) registerForPush(user.uid).catch(() => {});
   }, [user, profile]);
 
   useEffect(() => {
-    if (lastResponse && user && profile) router.navigate("/");
+    if (!lastResponse || !user || !profile) return;
+    const id = lastResponse.notification.request.identifier;
+    if (handledResponse.current === id) return;
+    handledResponse.current = id;
+    router.navigate("/");
   }, [lastResponse, user, profile]);
 
-  if (loading) return <View style={{ flex: 1, backgroundColor: colors.paper }} />;
+  if (loading || deleting) return <View style={{ flex: 1, backgroundColor: colors.paper }} />;
 
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
@@ -46,7 +51,6 @@ function RootNavigator() {
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    BigShouldersDisplay_800ExtraBold,
     BigShouldersDisplay_900Black,
     CourierPrime_400Regular,
     CourierPrime_700Bold,

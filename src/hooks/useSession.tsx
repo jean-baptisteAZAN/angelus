@@ -11,6 +11,9 @@ interface Session {
   /** Given name shared by Apple on first sign-in, used to prefill the pseudo. */
   suggestedName: string | null;
   setSuggestedName: (name: string | null) => void;
+  /** True while the account is being deleted, so the guard does not flash the onboarding screen. */
+  deleting: boolean;
+  setDeleting: (deleting: boolean) => void;
 }
 
 const SessionContext = createContext<Session | null>(null);
@@ -21,6 +24,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileReady, setProfileReady] = useState(false);
   const [suggestedName, setSuggestedName] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(
     () =>
@@ -54,6 +58,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     profile,
     suggestedName,
     setSuggestedName,
+    deleting,
+    setDeleting,
   };
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

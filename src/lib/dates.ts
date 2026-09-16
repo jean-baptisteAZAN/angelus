@@ -33,11 +33,21 @@ export function parisDateKey(instant: Date): string {
   return `${p.year}-${pad(p.month)}-${pad(p.day)}`;
 }
 
-/** Instant of the next Paris midnight after `instant`. DST switches happen at 2-3 am, never at midnight. */
+/**
+ * Instant of the next Paris midnight after `instant`. The offset is read twice, because the
+ * interval can cross a DST switch even though the switch itself never lands on midnight.
+ */
 export function nextParisMidnight(instant: Date): Date {
   const p = parisParts(instant);
-  const offsetMs = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - Math.floor(instant.getTime() / 1000) * 1000;
-  return new Date(Date.UTC(p.year, p.month - 1, p.day + 1) - offsetMs);
+  const wallClock = Date.UTC(p.year, p.month - 1, p.day + 1);
+  const guess = new Date(wallClock - parisOffsetMs(instant));
+  return new Date(wallClock - parisOffsetMs(guess));
+}
+
+/** How far ahead of UTC Paris is at that instant, in ms. */
+function parisOffsetMs(instant: Date): number {
+  const p = parisParts(instant);
+  return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - Math.floor(instant.getTime() / 1000) * 1000;
 }
 
 /** "14:59" in Paris time. */

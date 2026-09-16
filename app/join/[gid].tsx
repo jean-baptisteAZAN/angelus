@@ -12,7 +12,7 @@ import { Paper } from "@/ui/Paper";
 import { TapedStrip } from "@/ui/TapedStrip";
 import { Display, Type } from "@/ui/Text";
 
-type State = { kind: "loading" } | { kind: "missing" } | { kind: "found"; group: Group };
+type State = { kind: "loading" } | { kind: "missing" } | { kind: "error" } | { kind: "found"; group: Group };
 
 export default function JoinScreen() {
   const { gid } = useLocalSearchParams<{ gid: string }>();
@@ -26,7 +26,7 @@ export default function JoinScreen() {
       .then((snap) =>
         setState(snap.exists() ? { kind: "found", group: { id: snap.id, ...(snap.data() as Omit<Group, "id">) } } : { kind: "missing" }),
       )
-      .catch(() => setState({ kind: "missing" }));
+      .catch(() => setState({ kind: "error" }));
   }, [gid]);
 
   const open = () => {
@@ -53,6 +53,13 @@ export default function JoinScreen() {
         <>
           <Display size={36}>Ce groupe n'existe pas</Display>
           <Type>Le code est peut-être abîmé, ou le groupe a été supprimé.</Type>
+          <Button label="Fermer" variant="secondary" onPress={() => router.back()} />
+        </>
+      )}
+      {state.kind === "error" && (
+        <>
+          <Display size={36}>Groupe introuvable pour l'instant</Display>
+          <Type>Vérifie ta connexion, puis rescanne le code.</Type>
           <Button label="Fermer" variant="secondary" onPress={() => router.back()} />
         </>
       )}

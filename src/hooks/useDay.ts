@@ -1,5 +1,5 @@
 import { doc, onSnapshot, type Timestamp } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { db } from "@/lib/firebase";
 import type { Day, DayStatus } from "@/lib/types";
 
@@ -14,16 +14,25 @@ const RETRY_MS = 30_000;
 export function useDay(date: string): DayState {
   const [state, setState] = useState<DayState>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
+  const dateRef = useRef(date);
 
   useEffect(() => {
-    setState((prev) => (prev.kind === "ready" && prev.day.date === date ? prev : { kind: "loading" }));
+    // Keep "waiting" across retries: only a new day starts over from "loading".
+    if (dateRef.current !== date) {
+      dateRef.current = date;
+      setState({ kind: "loading" });
+    }
     let retry: ReturnType<typeof setTimeout> | undefined;
+    const scheduleRetry = () => {
+      if (retry) clearTimeout(retry);
+      retry = setTimeout(() => setAttempt((n) => n + 1), RETRY_MS);
+    };
     const unsubscribe = onSnapshot(
       doc(db, "days", date),
       (snap) => {
         if (!snap.exists()) {
           setState({ kind: "waiting" });
-          retry = setTimeout(() => setAttempt((n) => n + 1), RETRY_MS);
+          scheduleRetry();
           return;
         }
         const data = snap.data() as { theme: string; dropAt: Timestamp; status: DayStatus };
@@ -31,7 +40,7 @@ export function useDay(date: string): DayState {
       },
       () => {
         setState({ kind: "waiting" });
-        retry = setTimeout(() => setAttempt((n) => n + 1), RETRY_MS);
+        scheduleRetry();
       },
     );
     return () => {

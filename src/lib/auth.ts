@@ -33,7 +33,10 @@ export function isAppleCancel(error: unknown): boolean {
   return (error as { code?: string })?.code === "ERR_REQUEST_CANCELED";
 }
 
-/** Re-authenticates with Apple, revokes the Apple token, deletes app data then the Firebase user. */
+/**
+ * Re-authenticates with Apple, revokes the Apple token, deletes app data then the Firebase user.
+ * Not atomic: if it fails halfway, running it again finishes the job.
+ */
 export async function deleteAccount(): Promise<void> {
   const user = auth.currentUser;
   if (!user) return;

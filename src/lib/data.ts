@@ -48,12 +48,12 @@ export async function postTrack(date: string, uid: string, track: Track, dropAt:
     batch.set(doc(db, "days", date, "presence", uid), { postedAt: serverTimestamp(), late });
     return batch.commit();
   };
-  const deadline = dropAt.getTime() + ON_TIME_WINDOW_MS;
-  const late = Date.now() > deadline;
+  const late = Date.now() > dropAt.getTime() + ON_TIME_WINDOW_MS;
   try {
     await write(late);
   } catch (error) {
-    if (Math.abs(Date.now() - deadline) > 2 * 60_000) throw error;
+    // Near the one-hour mark the device clock can disagree with the server's: try the other flag once.
+    if ((error as { code?: string }).code !== "permission-denied") throw error;
     await write(!late);
   }
 }

@@ -6,14 +6,16 @@ import { colors } from "./theme";
 /** Red rubber stamp "Posté 14:59". Slams once when `animate` is true, unless reduced motion is on. */
 export function Stamp({ label, animate }: { label: string; animate: boolean }) {
   const progress = useRef(new Animated.Value(animate ? 0 : 1)).current;
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
 
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then(setReduceMotion)
+      .catch(() => setReduceMotion(false));
   }, []);
 
   useEffect(() => {
-    if (!animate) return;
+    if (!animate || reduceMotion === null) return;
     if (reduceMotion) {
       progress.setValue(1);
       return;

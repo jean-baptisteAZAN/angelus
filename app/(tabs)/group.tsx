@@ -19,11 +19,11 @@ import { Display, Type } from "@/ui/Text";
 import { colors } from "@/ui/theme";
 
 export default function GroupScreen() {
-  const { user } = useSession();
+  const { user, setDeleting } = useSession();
   const { selected, loading, select } = useGroups();
   const names = useMembers(selected?.memberIds ?? []);
-  const permission = usePushPermission();
-  const [deleting, setDeleting] = useState(false);
+  const { permission, tokenSaved } = usePushStatus();
+  const [deletingLocal, setDeletingLocal] = useState(false);
 
   if (loading) return <Paper>{null}</Paper>;
   if (!selected || !user) return <NoGroup />;
@@ -33,13 +33,27 @@ export default function GroupScreen() {
   const confirmRemove = (uid: string) =>
     Alert.alert(`Retirer ${names[uid] ?? "ce membre"} ?`, "Il pourra revenir en rescannant le QR code.", [
       { text: "Annuler", style: "cancel" },
-      { text: "Retirer", style: "destructive", onPress: () => removeFromGroup(selected.id, uid).catch(() => {}) },
+      {
+        text: "Retirer",
+        style: "destructive",
+        onPress: () =>
+          removeFromGroup(selected.id, uid).catch(() =>
+            Alert.alert("Impossible de retirer ce membre", "Vérifie ta connexion et réessaie."),
+          ),
+      },
     ]);
 
   const confirmLeave = () =>
     Alert.alert(`Quitter ${selected.name} ?`, "Tes sons passés restent dans sa playlist.", [
       { text: "Annuler", style: "cancel" },
-      { text: "Quitter", style: "destructive", onPress: () => removeFromGroup(selected.id, user.uid).catch(() => {}) },
+      {
+        text: "Quitter",
+        style: "destructive",
+        onPress: () =>
+          removeFromGroup(selected.id, user.uid).catch(() =>
+            Alert.alert("Impossible de quitter le groupe", "Vérifie ta connexion et réessaie."),
+          ),
+      },
     ]);
 
   const confirmDelete = () =>
@@ -52,11 +66,15 @@ export default function GroupScreen() {
           text: "Supprimer",
           style: "destructive",
           onPress: async () => {
+            setDeletingLocal(true);
             setDeleting(true);
             try {
               await deleteAccount();
             } catch (error) {
-              if (!isAppleCancel(error)) Alert.alert("Suppression impossible", "Réessaie dans un instant.");
+              if (!isAppleCancel(error)) {
+                Alert.alert("Suppression incomplète", "Relance la suppression pour terminer : rien n'a été perdu.");
+              }
+              setDeletingLocal(false);
               setDeleting(false);
             }
           },
@@ -75,6 +93,12 @@ export default function GroupScreen() {
               <Type bold>Notifs désactivées : tu rateras le thème. Touche ici pour les réactiver.</Type>
             </Highlight>
           </Pressable>
+        )}
+
+        {permission === "granted" && !tokenSaved && (
+          <Highlight>
+            <Type bold>Notifs autorisées, mais cet appareil n'est pas enregistré. Rouvre l'app pour réessayer.</Type>
+          </Highlight>
         )}
 
         <View style={{ alignItems: "center", gap: 12 }}>
@@ -98,10 +122,13 @@ export default function GroupScreen() {
                 {uid === selected.ownerId && <Type size={12}>créateur</Type>}
               </View>
               {isOwner && uid !== user.uid && (
-                <Pressable onPress={() => confirmRemove(uid)} hitSlop={10} accessibilityRole="button">
-                  <Type bold color={colors.marker}>
-                    Retirer
-                  </Type>
+                <Pressable
+                  onPress={() => confirmRemove(uid)}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  style={{ borderBottomWidth: 2, borderColor: colors.marker }}
+                >
+                  <Type bold>Retirer</Type>
                 </Pressable>
               )}
             </View>
@@ -114,29 +141,32 @@ export default function GroupScreen() {
           {!isOwner && <Button label="Quitter le groupe" variant="danger" onPress={confirmLeave} />}
         </View>
 
-        <Button label="Supprimer mon compte" variant="danger" onPress={confirmDelete} loading={deleting} />
+        <Button label="Supprimer mon compte" variant="danger" onPress={confirmDelete} loading={deletingLocal} />
       </ScrollView>
     </Paper>
   );
 }
 
-function usePushPermission(): PushPermission | null {
+function usePushStatus(): { permission: PushPermission | null; tokenSaved: boolean } {
   const { user } = useSession();
   const [permission, setPermission] = useState<PushPermission | null>(null);
+  const [tokenSaved, setTokenSaved] = useState(true);
 
-  const refresh = useCallback(() => {
-    getPushPermission().then(setPermission).catch(() => {});
-  }, []);
+  const refresh = useCallback(async () => {
+    const current = await getPushPermission().catch(() => null);
+    setPermission(current);
+    if (!user || current !== "granted") return;
+    const status = await registerForPush(user.uid).catch(() => null);
+    setTokenSaved(status?.tokenSaved ?? false);
+  }, [user]);
 
   useEffect(() => {
     refresh();
     const sub = AppState.addEventListener("change", (state) => {
-      if (state !== "active") return;
-      refresh();
-      if (user) registerForPush(user.uid).catch(() => {});
+      if (state === "active") refresh();
     });
     return () => sub.remove();
-  }, [refresh, user]);
+  }, [refresh]);
 
-  return permission;
+  return { permission, tokenSaved };
 }

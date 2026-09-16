@@ -9,16 +9,16 @@ export function useMembers(memberIds: string[]): Record<string, string> {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all(
+    Promise.allSettled(
       memberIds.map(async (uid) => {
         const snap = await getDoc(doc(db, "users", uid));
         return [uid, (snap.get("name") as string | undefined) ?? "Quelqu'un"] as const;
       }),
-    )
-      .then((entries) => {
-        if (!cancelled) setNames(Object.fromEntries(entries));
-      })
-      .catch(() => {});
+    ).then((results) => {
+      if (cancelled) return;
+      const entries = results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+      setNames((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+    });
     return () => {
       cancelled = true;
     };

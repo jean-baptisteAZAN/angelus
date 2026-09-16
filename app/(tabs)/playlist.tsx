@@ -18,7 +18,7 @@ import { colors } from "@/ui/theme";
 
 export default function PlaylistScreen() {
   const { selected, loading } = useGroups();
-  const { entries } = usePlaylist(selected?.id ?? null);
+  const { entries, loading: loadingEntries } = usePlaylist(selected?.id ?? null);
   const player = usePlayer();
   const queue = useRef<number | null>(null);
 
@@ -28,7 +28,7 @@ export default function PlaylistScreen() {
       queue.current = null;
       return;
     }
-    player.toggle(`playlist:${entry.id}`, () => fetchPreviewUrl(entry.track.deezerId));
+    player.toggle(`playlist:${entry.id}`, () => fetchPreviewUrl(entry.track.deezerId), entry.track.deezerId);
   };
 
   // "Tout écouter": when a preview ends, move on to the next winner.
@@ -40,7 +40,7 @@ export default function PlaylistScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [player.didJustFinish]);
 
-  if (loading) return <Paper>{null}</Paper>;
+  if (loading || loadingEntries) return <Paper>{null}</Paper>;
   if (!selected) return <NoGroup />;
 
   return (
@@ -57,8 +57,10 @@ export default function PlaylistScreen() {
               <Button
                 label="Tout écouter"
                 onPress={() => {
+                  // Restart from the top even if the first winner is the track already loaded.
+                  player.stop();
                   queue.current = 0;
-                  playAt(0);
+                  setTimeout(() => playAt(0), 0);
                 }}
                 style={{ alignSelf: "flex-start" }}
               />
@@ -74,13 +76,20 @@ export default function PlaylistScreen() {
             playing={player.currentKey === `playlist:${item.id}` && player.playing}
             onPlay={() => {
               queue.current = null;
-              player.toggle(`playlist:${item.id}`, () => fetchPreviewUrl(item.track.deezerId));
+              player.toggle(`playlist:${item.id}`, () => fetchPreviewUrl(item.track.deezerId), item.track.deezerId);
             }}
           />
         )}
         style={{ borderLeftWidth: 0 }}
       />
-      <View pointerEvents="none" style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 10, backgroundColor: colors.toner }} />
+      <View
+        pointerEvents="none"
+        style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 22, backgroundColor: colors.toner, alignItems: "center", justifyContent: "center" }}
+      >
+        <Type size={12} bold color={colors.paperNew} style={{ transform: [{ rotate: "-90deg" }], width: 300, textAlign: "center" }} numberOfLines={1}>
+          {selected.name}, face A
+        </Type>
+      </View>
     </Paper>
   );
 }

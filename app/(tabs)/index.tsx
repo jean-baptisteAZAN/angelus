@@ -109,7 +109,7 @@ function DayFeed({ day, group, now }: { day: Day; group: Group; now: Date }) {
               ))}
             </View>
           )}
-          <Missing memberIds={group.memberIds.filter((m) => !presence.some((p) => p.uid === m))} names={names} />
+          <Missing memberIds={group.memberIds.filter((m) => m !== uid && !presence.some((p) => p.uid === m))} names={names} />
           <Type bold>Poste ton son pour écouter les leurs.</Type>
           {!closed && <Button label="Choisir mon son" onPress={() => router.push("/search")} />}
         </View>
@@ -161,7 +161,8 @@ function PostedFeed({ day, group, uid, posts, votes, names, now, closed }: FeedP
     if (hadMine.current === null || mine) hadMine.current = !!mine;
   }, [mine]);
 
-  const play = (post: Post) => player.toggle(`post:${post.uid}`, () => fetchPreviewUrl(post.track.deezerId));
+  const play = (post: Post) =>
+    player.toggle(`post:${post.uid}`, () => fetchPreviewUrl(post.track.deezerId), post.track.deezerId);
 
   const onVote = async (postUid: string) => {
     if (closed) return;
@@ -249,10 +250,7 @@ function PostedFeed({ day, group, uid, posts, votes, names, now, closed }: FeedP
                 opacity: closed ? 0.4 : 1,
               }}
             >
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Tally count={Math.min(count, 5)} />
-                <Display size={22}>{count}</Display>
-              </View>
+              <Display size={26}>{count}</Display>
               <Type size={12} bold>
                 {voted ? "Ton vote" : "Voter"}
               </Type>

@@ -17,21 +17,22 @@ half4 main(vec2 xy) {
   float ink = 1.0 - smoothstep(radius - 0.7, radius + 0.7, distance(xy, center));
   return half4(mix(paper, vec3(0.0), ink), 1.0);
 }
-`)!;
+`);
 
 const PAPER = [0xf7 / 255, 0xf7 / 255, 0xf3 / 255];
 
 /** Album cover printed like a photocopy. */
 export function HalftoneCover({ uri, size }: { uri: string; size: number }) {
   const image = useImage(uri);
-  const rect = { x: 0, y: 0, width: size, height: size };
+  const inner = size - 2;
+  const rect = { x: 0, y: 0, width: inner, height: inner };
 
   return (
     <View style={{ width: size, height: size, borderWidth: 1, borderColor: colors.toner, backgroundColor: colors.paperNew }}>
-      <Canvas style={{ width: size - 2, height: size - 2 }}>
-        {image && (
+      <Canvas style={{ width: inner, height: inner }}>
+        {image && HALFTONE && (
           <Fill>
-            <Shader source={HALFTONE} uniforms={{ cell: Math.max(2.5, size / 28), paper: PAPER }}>
+            <Shader source={HALFTONE} uniforms={{ cell: Math.max(2.5, inner / 28), paper: PAPER }}>
               <ImageShader image={image} fit="cover" rect={rect} />
             </Shader>
           </Fill>

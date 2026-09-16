@@ -36,7 +36,7 @@ export function Button({ label, onPress, variant = "primary", disabled, loading,
       {loading ? (
         <ActivityIndicator color={primary ? colors.paperNew : tint} />
       ) : (
-        <Display size={24} color={primary ? colors.paperNew : tint}>
+        <Display size={24} color={primary ? colors.paperNew : colors.toner}>
           {label}
         </Display>
       )}

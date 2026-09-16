@@ -1,6 +1,6 @@
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Alert } from "react-native";
+import { Alert, Linking } from "react-native";
 
 interface PlayerState {
   /** Key of the track loaded in the player (e.g. a post uid or a Deezer id), or null. */
@@ -8,7 +8,7 @@ interface PlayerState {
   playing: boolean;
   progress: number;
   didJustFinish: boolean;
-  toggle: (key: string, resolveUrl: () => Promise<string | null>) => Promise<void>;
+  toggle: (key: string, resolveUrl: () => Promise<string | null>, deezerId?: number) => Promise<void>;
   stop: () => void;
 }
 
@@ -24,7 +24,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggle = useCallback(
-    async (key: string, resolveUrl: () => Promise<string | null>) => {
+    async (key: string, resolveUrl: () => Promise<string | null>, deezerId?: number) => {
       if (key === currentKey) {
         if (status.playing) {
           player.pause();
@@ -34,9 +34,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         }
         return;
       }
-      const url = await resolveUrl();
+      const url = await resolveUrl().catch(() => null);
       if (!url) {
-        Alert.alert("Extrait indisponible", "Deezer ne fournit pas d'extrait pour ce son.");
+        Alert.alert(
+          "Extrait indisponible",
+          "Deezer ne fournit pas d'extrait pour ce son.",
+          deezerId
+            ? [
+                { text: "Fermer", style: "cancel" },
+                { text: "Ouvrir dans Deezer", onPress: () => Linking.openURL(`https://www.deezer.com/track/${deezerId}`) },
+              ]
+            : undefined,
+        );
         return;
       }
       player.replace({ uri: url });
