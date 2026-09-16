@@ -110,6 +110,17 @@ service cloud.firestore {
       allow read: if signedIn() && resource.data.status != 'pending';
       allow write: if false;
 
+      match /presence/{uid} {
+        allow read: if signedIn();
+        allow create: if isMe(uid)
+          && dayData(date).status == 'live'
+          && request.resource.data.keys().hasOnly(['postedAt', 'late'])
+          && request.resource.data.postedAt == request.time
+          && existsAfter(/databases/$(database)/documents/days/$(date)/posts/$(uid))
+          && getAfter(/databases/$(database)/documents/days/$(date)/posts/$(uid)).data.late == request.resource.data.late;
+        allow update, delete: if false;
+      }
+
       match /posts/{uid} {
         allow read: if signedIn() && hasPostedOn(date, request.auth.uid);
         allow create: if isMe(uid)
