@@ -52,7 +52,7 @@ export default function PlaylistScreen() {
         ListHeaderComponent={
           <View style={{ gap: 10, marginBottom: 16 }}>
             <GroupSwitcher title={(name) => `Playlist de ${name}`} />
-            <Type>Le son gagnant de chaque jour.</Type>
+            <Type>Le son qui a gagné chaque jour.</Type>
             {entries.length > 0 && (
               <Button
                 label="Tout écouter"
@@ -68,7 +68,7 @@ export default function PlaylistScreen() {
           </View>
         }
         ListEmptyComponent={
-          <Type style={{ marginTop: 12 }}>Pas encore de gagnant. Le premier sera annoncé le lendemain du premier vote, à 9 h.</Type>
+          <Type style={{ marginTop: 12 }}>Aucun gagnant pour l'instant. Le premier arrive le lendemain de votre premier vote, à 9 h.</Type>
         }
         renderItem={({ item }) => (
           <PlaylistRow

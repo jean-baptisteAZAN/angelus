@@ -24,7 +24,7 @@ export default function GroupScreen() {
   const isOwner = selected.ownerId === user.uid;
 
   const confirmRemove = (uid: string) =>
-    Alert.alert(`Retirer ${names[uid] ?? "ce membre"} ?`, "Il pourra revenir en rescannant le QR code.", [
+    Alert.alert(`Retirer ${names[uid] ?? "ce membre"} ?`, "Il pourra revenir en scannant à nouveau le QR code du groupe.", [
       { text: "Annuler", style: "cancel" },
       {
         text: "Retirer",
@@ -37,7 +37,7 @@ export default function GroupScreen() {
     ]);
 
   const confirmLeave = () =>
-    Alert.alert(`Quitter ${selected.name} ?`, "Tes sons passés restent dans sa playlist.", [
+    Alert.alert(`Quitter ${selected.name} ?`, "Tes sons déjà postés restent dans sa playlist.", [
       { text: "Annuler", style: "cancel" },
       {
         text: "Quitter",
@@ -96,7 +96,7 @@ export default function GroupScreen() {
         </View>
 
         <View style={{ gap: 12 }}>
-          <Button label="Scanner un code" variant="secondary" onPress={() => router.push("/scan")} />
+          <Button label="Rejoindre un groupe" variant="secondary" onPress={() => router.push("/scan")} />
           <Button label="Créer un groupe" variant="secondary" onPress={() => promptCreateGroup(user.uid, select)} />
           {!isOwner && <Button label="Quitter le groupe" variant="danger" onPress={confirmLeave} />}
         </View>

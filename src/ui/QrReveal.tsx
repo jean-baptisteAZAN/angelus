@@ -38,8 +38,8 @@ export function QrReveal({ groupId, groupName }: { groupId: string; groupName: s
   if (!shown) {
     return (
       <View style={{ gap: 10 }}>
-        <Button label="Afficher le QR code" onPress={() => setShown(true)} />
-        <Type size={13}>Ton ami le scanne, il arrive directement dans {groupName}.</Type>
+        <Button label="Inviter un ami" onPress={() => setShown(true)} />
+        <Type size={13}>Montre-lui un QR code à scanner : il rejoint {groupName} tout de suite.</Type>
       </View>
     );
   }
@@ -65,9 +65,9 @@ export function QrReveal({ groupId, groupName }: { groupId: string; groupName: s
         <Tape style={{ bottom: -8, right: -14 }} rotate={-20} />
       </View>
       <Type size={13} style={{ textAlign: "center" }}>
-        Ton ami le scanne, il arrive directement dans {groupName}.
+        Fais scanner ce code : ton ami rejoint {groupName} tout de suite.
       </Type>
-      <Button label="Ranger le QR code" variant="secondary" onPress={() => setShown(false)} />
+      <Button label="Masquer le code" variant="secondary" onPress={() => setShown(false)} />
     </View>
   );
 }

@@ -52,9 +52,9 @@ function Waiting() {
   return (
     <View style={{ gap: 16, marginTop: 24 }}>
       <TapedStrip>
-        <Display size={34}>Pas encore de thème aujourd'hui</Display>
+        <Display size={34}>Le thème n'est pas encore tombé</Display>
       </TapedStrip>
-      <Type>Il tombe à une heure surprise, entre 10 h et 20 h. Tu recevras une notif.</Type>
+      <Type>Il arrive à une heure surprise, entre 10 h et 20 h. Tu reçois une notif à ce moment-là.</Type>
     </View>
   );
 }
@@ -82,23 +82,23 @@ function DayFeed({ day, group, now }: { day: Day; group: Group; now: Date }) {
       ) : (
         <View style={{ gap: 16 }}>
           {closed ? (
-            <Type bold>La journée est terminée.</Type>
+            <Type bold>C'est fini pour aujourd'hui. Reviens demain.</Type>
           ) : now.getTime() < deadline ? (
             <View>
               <Highlight>
                 <Display size={64}>{durationLabel(deadline - now.getTime())}</Display>
               </Highlight>
-              <Type>pour poster à l'heure. Après, ton son sera marqué en retard.</Type>
+              <Type>avant d'être en retard. Passé ce délai, tu peux encore poster jusqu'à minuit.</Type>
             </View>
           ) : (
             <Highlight>
-              <Type bold>Tu es en retard, tu peux encore poster jusqu'à minuit.</Type>
+              <Type bold>Tu es en retard. Tu peux quand même poster jusqu'à minuit.</Type>
             </Highlight>
           )}
 
-          <Display size={26}>Déjà postés</Display>
+          <Display size={26}>Ils ont déjà posté</Display>
           {presence.length === 0 ? (
-            <Type>Personne n'a encore posté. Lance-toi.</Type>
+            <Type>Personne n'a encore posté. À toi d'ouvrir le bal.</Type>
           ) : (
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 18 }}>
               {presence.map((p) => (
@@ -111,7 +111,7 @@ function DayFeed({ day, group, now }: { day: Day; group: Group; now: Date }) {
           )}
           <Missing memberIds={group.memberIds.filter((m) => m !== uid && !presence.some((p) => p.uid === m))} names={names} />
           <Type bold>Poste ton son pour écouter les leurs.</Type>
-          {!closed && <Button label="Choisir mon son" onPress={() => router.push("/search")} />}
+          {!closed && <Button label="Poster mon son" onPress={() => router.push("/search")} />}
         </View>
       )}
     </View>
@@ -179,7 +179,7 @@ function PostedFeed({ day, group, uid, posts, votes, names, now, closed }: FeedP
   return (
     <View style={{ gap: 18 }}>
       <Highlight>
-        <Display size={30}>{closed ? "Vote clos" : `Vote clos dans ${durationLabel(nextParisMidnight(now).getTime() - now.getTime())}`}</Display>
+        <Display size={30}>{closed ? "Votes terminés" : `Fin des votes dans ${durationLabel(nextParisMidnight(now).getTime() - now.getTime())}`}</Display>
       </Highlight>
 
       {mine && (
@@ -189,7 +189,7 @@ function PostedFeed({ day, group, uid, posts, votes, names, now, closed }: FeedP
           </Pressable>
           <View style={{ flex: 1, gap: 4 }}>
             <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-              <Type size={13}>Ton son</Type>
+              <Type size={13}>Ton son du jour</Type>
               <LateBadge late={mine.late} />
             </View>
             <Display size={26} numberOfLines={2}>
@@ -204,7 +204,7 @@ function PostedFeed({ day, group, uid, posts, votes, names, now, closed }: FeedP
         </View>
       )}
 
-      <Type size={13}>Un vote, modifiable jusqu'à minuit.</Type>
+      <Type size={13}>Tu as un vote. Tu peux en changer jusqu'à minuit.</Type>
 
       {others.map((post) => {
         const voted = myVote === post.uid;
@@ -265,7 +265,7 @@ function PostedFeed({ day, group, uid, posts, votes, names, now, closed }: FeedP
 }
 
 function VoteLine({ names }: { names: string[] }) {
-  if (names.length === 0) return <Type size={12}>Aucun vote</Type>;
+  if (names.length === 0) return <Type size={12}>Aucun vote pour l'instant</Type>;
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
       <Tally count={names.length} />

@@ -32,12 +32,12 @@ export default function ScanScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12} accessibilityRole="button">
           <Type>Fermer</Type>
         </Pressable>
-        <Display size={30}>Scanner un groupe</Display>
+        <Display size={30}>Rejoindre un groupe</Display>
       </View>
 
       {!permission ? null : !permission.granted ? (
         <View style={{ gap: 12 }}>
-          <Type>Angelus a besoin de la caméra pour lire le QR code d'un groupe.</Type>
+          <Type>Angelus utilise la caméra pour lire le QR code d'un groupe.</Type>
           {permission.canAskAgain ? (
             <Button label="Autoriser la caméra" onPress={requestPermission} />
           ) : (
@@ -54,7 +54,7 @@ export default function ScanScreen() {
               <Type bold>{error}</Type>
             </Highlight>
           ) : (
-            <Type>Vise le QR code affiché dans l'onglet Groupe de ton ami.</Type>
+            <Type>Vise le QR code que ton ami affiche depuis son onglet Groupe.</Type>
           )}
         </>
       )}

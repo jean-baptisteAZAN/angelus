@@ -61,15 +61,15 @@ export default function SettingsScreen() {
         </View>
 
         <View style={{ gap: 8 }}>
-          <Display size={24}>Toi</Display>
+          <Display size={24}>Ton pseudo</Display>
           <Type>{profile?.name ?? "—"}</Type>
         </View>
 
         <View style={{ gap: 10 }}>
           <Display size={24}>Notifications</Display>
           <Type size={13}>
-            Angelus en envoie trois par jour : le thème, un rappel avant la fin de l'heure, et les résultats du
-            lendemain matin.
+            Angelus en envoie trois par jour : le thème quand il tombe, un rappel avant d'être en retard, et les
+            résultats de la veille le matin.
           </Type>
 
           {permission === "granted" && tokenSaved && <Type bold>Activées sur cet appareil.</Type>}
@@ -77,7 +77,7 @@ export default function SettingsScreen() {
           {permission === "denied" && (
             <>
               <Highlight>
-                <Type bold>Refusées : tu rateras le thème du jour.</Type>
+                <Type bold>Refusées : tu ne sauras pas quand le thème tombe.</Type>
               </Highlight>
               <Button label="Ouvrir les réglages iOS" variant="secondary" onPress={() => Linking.openSettings()} />
             </>
@@ -100,8 +100,8 @@ export default function SettingsScreen() {
         <View style={{ gap: 10 }}>
           <Display size={24}>Compte</Display>
           <Type size={13}>
-            La suppression retire ton pseudo, tes groupes et tes notifs. Les sons déjà postés restent dans les
-            playlists de tes groupes.
+            La suppression retire ton pseudo, tes groupes et tes notifs. Les sons que tu as déjà postés restent
+            dans les playlists de tes groupes.
           </Type>
           <Button label="Se déconnecter" variant="secondary" onPress={confirmSignOut} />
           <Button label="Supprimer mon compte" variant="danger" onPress={confirmDelete} loading={deletingLocal} />

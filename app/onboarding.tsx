@@ -29,11 +29,11 @@ export default function OnboardingScreen() {
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1, paddingHorizontal: 24, justifyContent: "space-between" }}>
         <View style={{ marginTop: 64, gap: 16 }}>
           <Display size={48}>Comment on t'appelle ?</Display>
-          <Type>Ton pseudo apparaît à côté de tes sons et de tes votes.</Type>
+          <Type>Ce nom apparaît à côté de tes sons et de tes votes.</Type>
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="Ton pseudo"
+            placeholder="Ton prénom ou ton pseudo"
             placeholderTextColor={colors.screen}
             maxLength={30}
             autoFocus

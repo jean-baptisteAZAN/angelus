@@ -55,7 +55,7 @@ export default function SearchScreen() {
 
   const onPost = () => {
     if (!user || !selected || dayState.kind !== "ready") return;
-    Alert.alert(`Poster ${selected.title} ?`, "Tu ne pourras plus le changer aujourd'hui.", [
+    Alert.alert(`Poster ${selected.title} ?`, "Tu ne pourras plus changer de son aujourd'hui.", [
       { text: "Annuler", style: "cancel" },
       {
         text: "Poster",
@@ -67,7 +67,7 @@ export default function SearchScreen() {
             router.back();
           } catch {
             setPosting(false);
-            Alert.alert("Envoi impossible", "La journée est peut-être terminée, ou la connexion a coupé. Réessaie.");
+            Alert.alert("Impossible de poster", "La journée est peut-être terminée, ou la connexion a coupé. Réessaie.");
           }
         },
       },
@@ -83,14 +83,14 @@ export default function SearchScreen() {
             <Pressable onPress={() => router.back()} hitSlop={12} accessibilityRole="button">
               <Type>Annuler</Type>
             </Pressable>
-            <Display size={30}>Ton son du jour</Display>
+            <Display size={30}>Trouve ton son</Display>
           </View>
           {dayState.kind === "ready" && <Type size={13}>Thème : {dayState.day.theme}</Type>}
           <View style={{ flexDirection: "row", alignItems: "center", borderWidth: 2, borderColor: colors.toner, backgroundColor: colors.paperNew, paddingHorizontal: 12 }}>
             <TextInput
               value={queryText}
               onChangeText={setQueryText}
-              placeholder="Titre ou artiste"
+              placeholder="Un titre, un artiste"
               placeholderTextColor={colors.screen}
               autoFocus
               autoCorrect={false}
@@ -99,12 +99,12 @@ export default function SearchScreen() {
             />
             {state.kind === "loading" && <ActivityIndicator color={colors.toner} />}
           </View>
-          <Type size={12}>Résultats Deezer</Type>
+          <Type size={12}>Résultats Deezer. Touche ▶ pour écouter 30 s.</Type>
         </View>
 
         {state.kind === "error" ? (
           <View style={{ padding: 20, gap: 12 }}>
-            <Type bold>Recherche indisponible, réessaie.</Type>
+            <Type bold>La recherche Deezer ne répond pas.</Type>
             <Button label="Réessayer" variant="secondary" onPress={() => setAttempt((n) => n + 1)} />
           </View>
         ) : (
@@ -113,7 +113,7 @@ export default function SearchScreen() {
             keyExtractor={(item) => String(item.deezerId)}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 16 }}
-            ListEmptyComponent={state.kind === "done" ? <Type style={{ marginTop: 16 }}>Aucun résultat. Essaie un autre titre.</Type> : null}
+            ListEmptyComponent={state.kind === "done" ? <Type style={{ marginTop: 16 }}>Aucun résultat. Essaie une autre orthographe.</Type> : null}
             renderItem={({ item }) => {
               const isSelected = selected?.deezerId === item.deezerId;
               const key = `search:${item.deezerId}`;
@@ -164,7 +164,7 @@ export default function SearchScreen() {
 
         <View style={{ paddingHorizontal: 20, paddingTop: 12, gap: 10, borderTopWidth: 2, borderColor: colors.toner }}>
           <Type size={13}>
-            Définitif une fois posté. Ton son part dans {groupCount > 1 ? `tes ${groupCount} groupes` : "ton groupe"}.
+            Une fois posté, tu ne peux plus le changer. Il part dans {groupCount > 1 ? `tes ${groupCount} groupes` : "ton groupe"}.
           </Type>
           <Button label="Poster ce son" onPress={onPost} disabled={!selected || dayState.kind !== "ready"} loading={posting} />
         </View>
