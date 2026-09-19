@@ -51,7 +51,7 @@ const TodayWidgetLayout = (props: TodayWidgetProps, environment: WidgetEnvironme
     <VStack
       alignment="leading"
       spacing={compact ? 6 : 10}
-      modifiers={[containerBackground(PAPER, "widget"), padding({ all: 2 }), widgetURL("angelus://")]}
+      modifiers={[widgetURL("angelus:///"), padding({ all: 2 }), containerBackground(PAPER, "widget")]}
     >
       <HStack>
         <Text modifiers={[font({ size: 12, weight: "bold", design: "monospaced" }), foregroundStyle(TONER)]}>

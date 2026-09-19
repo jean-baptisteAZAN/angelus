@@ -20,5 +20,6 @@ export const auth = initializeAuth(app, {
 });
 
 export const db = initializeFirestore(app, {
-  experimentalAutoDetectLongPolling: true,
+  // WebChannel streams keep erroring on React Native; long polling is the stable transport here.
+  experimentalForceLongPolling: true,
 });
