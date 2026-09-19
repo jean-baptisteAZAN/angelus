@@ -1,6 +1,6 @@
-import { ActionSheetIOS, Pressable, View } from "react-native";
+import { ActionSheetIOS, Pressable } from "react-native";
 import { useGroups } from "@/hooks/useGroups";
-import { Display, Type } from "./Text";
+import { Display } from "./Text";
 
 /** Group name as a title; tapping it lets you switch between your groups. */
 export function GroupSwitcher({ title }: { title?: (groupName: string) => string }) {
@@ -17,20 +17,12 @@ export function GroupSwitcher({ title }: { title?: (groupName: string) => string
     );
   };
 
-  const position = groups.findIndex((g) => g.id === selected.id) + 1;
   return (
-    <Pressable onPress={open} accessibilityRole="button" style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
-      <Display size={34} style={{ flexShrink: 1 }}>
+    <Pressable onPress={open} accessibilityRole="button">
+      <Display size={34}>
         {title ? title(selected.name) : selected.name}
         {groups.length > 1 ? " ⌄" : ""}
       </Display>
-      {groups.length > 1 && (
-        <View style={{ paddingBottom: 6 }}>
-          <Type size={12}>
-            {position} de tes {groups.length} groupes
-          </Type>
-        </View>
-      )}
     </Pressable>
   );
 }

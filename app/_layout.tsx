@@ -43,6 +43,7 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="search" options={{ presentation: "modal" }} />
         <Stack.Screen name="scan" options={{ presentation: "modal" }} />
+        <Stack.Screen name="settings" options={{ presentation: "modal" }} />
         <Stack.Screen name="join/[gid]" options={{ presentation: "modal" }} />
       </Stack.Protected>
     </Stack>

@@ -80,16 +80,7 @@ export default function PlaylistScreen() {
             }}
           />
         )}
-        style={{ borderLeftWidth: 0 }}
       />
-      <View
-        pointerEvents="none"
-        style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 22, backgroundColor: colors.toner, alignItems: "center", justifyContent: "center" }}
-      >
-        <Type size={12} bold color={colors.paperNew} style={{ transform: [{ rotate: "-90deg" }], width: 300, textAlign: "center" }} numberOfLines={1}>
-          {selected.name}, face A
-        </Type>
-      </View>
     </Paper>
   );
 }

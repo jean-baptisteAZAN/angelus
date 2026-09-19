@@ -6,6 +6,7 @@ import {
   reauthenticateWithCredential,
   revokeAccessToken,
   signInWithCredential,
+  signOut as firebaseSignOut,
 } from "firebase/auth";
 import { auth } from "./firebase";
 import { deleteMyData } from "./data";
@@ -27,6 +28,11 @@ export async function signInWithApple(): Promise<string | null> {
   const { apple, credential } = await appleCredential();
   await signInWithCredential(auth, credential);
   return apple.fullName?.givenName ?? null;
+}
+
+/** Signs out of Firebase. The push token stays: it belongs to the device, not the session. */
+export function signOut(): Promise<void> {
+  return firebaseSignOut(auth);
 }
 
 export function isAppleCancel(error: unknown): boolean {
