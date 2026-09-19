@@ -17,7 +17,8 @@
           "fr"
         ],
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "appleTeamId": "NZMKNK8FPD"
     },
     "plugins": [
       "expo-router",
@@ -29,7 +30,27 @@
         }
       ],
       "expo-notifications",
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-widgets",
+        {
+          "bundleIdentifier": "app.angelus.ios.widgets",
+          "groupIdentifier": "group.app.angelus.ios",
+          "widgets": [
+            {
+              "name": "TodayWidget",
+              "displayName": "Thème du jour",
+              "description": "Le thème du jour, le temps qu'il te reste et qui a déjà posté.",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
