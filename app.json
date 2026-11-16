@@ -31,6 +31,7 @@
       ],
       "expo-notifications",
       "expo-audio",
+      "./plugins/withWidgetContainerBackground",
       [
         "expo-widgets",
         {

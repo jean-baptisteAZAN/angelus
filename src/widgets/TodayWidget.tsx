@@ -1,7 +1,6 @@
 import { HStack, Spacer, Text, VStack } from "@expo/ui/swift-ui";
 import {
   background,
-  containerBackground,
   font,
   foregroundStyle,
   lineLimit,
@@ -20,7 +19,6 @@ export type TodayWidgetProps = {
   memberCount: number;
 };
 
-const PAPER = "#E9E9E5";
 const TONER = "#000000";
 const FLUO = "#F2FF3A";
 
@@ -51,7 +49,7 @@ const TodayWidgetLayout = (props: TodayWidgetProps, environment: WidgetEnvironme
     <VStack
       alignment="leading"
       spacing={compact ? 6 : 10}
-      modifiers={[widgetURL("angelus:///"), padding({ all: 2 }), containerBackground(PAPER, "widget")]}
+      modifiers={[widgetURL("angelus:///"), padding({ all: 2 })]}
     >
       <HStack>
         <Text modifiers={[font({ size: 12, weight: "bold", design: "monospaced" }), foregroundStyle(TONER)]}>
@@ -76,7 +74,7 @@ const TodayWidgetLayout = (props: TodayWidgetProps, environment: WidgetEnvironme
         modifiers={[
           font({ size: 12, weight: "bold", design: "monospaced" }),
           foregroundStyle(TONER),
-          background(props.state === "posted" || props.state === "closed" ? PAPER : FLUO),
+          background(props.state === "posted" || props.state === "closed" ? "#00000000" : FLUO),
           lineLimit(2),
         ]}
       >

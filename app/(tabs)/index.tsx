@@ -11,6 +11,7 @@ import { castVote, removeVote } from "@/lib/data";
 import { durationLabel, nextParisMidnight, ON_TIME_WINDOW_MS, parisDateKey, parisTimeLabel } from "@/lib/dates";
 import { fetchPreviewUrl } from "@/lib/deezer";
 import { usePlayer } from "@/lib/player";
+import { syncWidget } from "@/lib/widget";
 import type { Day, Group, Post, Vote } from "@/lib/types";
 import { LateBadge } from "@/ui/Badge";
 import { GroupSwitcher } from "@/ui/GroupSwitcher";
@@ -70,6 +71,11 @@ function DayFeed({ day, group, now }: { day: Day; group: Group; now: Date }) {
 
   const deadline = day.dropAt.getTime() + ON_TIME_WINDOW_MS;
   const closed = day.status === "closed";
+
+  // Keep the home screen widget in step with what this screen shows.
+  useEffect(() => {
+    syncWidget({ day, iPosted, postedCount: presence.length, memberCount: group.memberIds.length });
+  }, [day, iPosted, presence.length, group.memberIds.length]);
 
   return (
     <View style={{ gap: 20 }}>
