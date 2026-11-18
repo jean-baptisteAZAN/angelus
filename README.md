@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/icon.png" alt="Angelus icon" width="120" />
+<img src="docs/logo/angelus.svg" alt="Angelus logo" width="140" />
 
 # Angelus
 

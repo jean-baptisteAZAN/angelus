@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<defs><clipPath id="r"><rect width="1024" height="1024" rx="230"/></clipPath><filter id="g"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.05"/></filter></defs>
+<g clip-path="url(#r)"><rect width="1024" height="1024" fill="#E9E9E5"/>
+<circle cx="512" cy="530" r="380" fill="#000"/>
+<g fill="none" stroke="#2a2a2a" stroke-width="6">
+<circle cx="512" cy="530" r="330"/><circle cx="512" cy="530" r="290"/><circle cx="512" cy="530" r="250"/><circle cx="512" cy="530" r="210"/>
+</g>
+<g stroke="#E9E9E5" stroke-width="16" stroke-linecap="round">
+<line x1="512" y1="180" x2="512" y2="220"/><line x1="862" y1="530" x2="822" y2="530"/><line x1="512" y1="880" x2="512" y2="840"/><line x1="162" y1="530" x2="202" y2="530"/>
+</g>
+<circle cx="512" cy="530" r="140" fill="#F2FF3A"/>
+<line x1="512" y1="530" x2="700" y2="330" stroke="#E3261B" stroke-width="34" stroke-linecap="round"/>
+<circle cx="512" cy="530" r="30" fill="#000"/>
+<g transform="translate(40 50) rotate(-38 210 210)"><rect x="80" y="170" width="260" height="84" fill="#000" opacity=".12" transform="translate(6 8)"/><rect x="80" y="170" width="260" height="84" fill="#F7F7F3" opacity=".92"/></g>
+<rect width="1024" height="1024" filter="url(#g)" opacity=".15"/>
+</g></svg>
